@@ -1,0 +1,2 @@
+- [ ] Test the idea of Separation of business logic by inheriting seperated classes
+    - `super` keyword to use the method of base class might help
