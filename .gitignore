@@ -20,9 +20,5 @@ data.json
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
-.editorconfig
-.eslintignore
-.eslintrc
-.npmrc
 package-lock.json
 styles.css
