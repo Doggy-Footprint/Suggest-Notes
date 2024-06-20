@@ -9,11 +9,11 @@ if you want to check source code, please visit https://github.com/Doggy-Footprin
 */
 `;
 
-const prod = (process.argv.some(v === "production"));
+const prod = (process.argv.some(v => v === "production"));
 
 const context = await esbuild.context({
     banner: { js: banner },
-    entryPoints: ["obsidian_srcs/main.ts", "obsidian_srcs/style.css"],
+    entryPoints: ["obsidian_srcs/main.ts", "obsidian_srcs/styles.css"],
     bundle: true,
 	external: [
 		"obsidian",
@@ -35,7 +35,7 @@ const context = await esbuild.context({
     logLevel: "info",
     sourcemap: prod ? false : "inline",
     treeShaking: true,
-    outfile: "main.js",
+    outdir: "./",
 });
 
 if (prod) {

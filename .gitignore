@@ -25,3 +25,4 @@ data.json
 .eslintrc
 .npmrc
 package-lock.json
+styles.css

@@ -4,9 +4,9 @@
 	"description": "Constructing project",
 	"main": "main.js",
 	"scripts": {
-		"dev": "node build.js",
+		"dev": "node esbuild.config.mjs",
 		"sync-obsidian": "node sync_obsidian.mjs && git add manifest.json versions.json",
-		"build": "npm run sync-obsidian && tsc -noEmit -skipLibCheck && node build.js production"
+		"build": "npm run sync-obsidian && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
 	},
 	"keywords": [],
 	"author": "Doggy-Footprint",
