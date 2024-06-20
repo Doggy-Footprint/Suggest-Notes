@@ -1,9 +1,9 @@
 {
-	"id": "test-suggestion",
-	"name": "Keyword Suggestion Plugin",
-	"version": "1.0.0",
+	"id": "keyword-suggesting-plugin",
+	"name": "Keyword Suggesting Plugin",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Testing",
+	"description": "Constructing project",
 	"author": "Doggy-Footprint",
 	"isDesktopOnly": false
 }
