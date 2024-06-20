@@ -1,5 +1,4 @@
 export class Trie {
-    // TODO: don't allow duplicate
     roots: Map<string, Node>;
 
     constructor(roots?: Map<string, Node>) {
@@ -31,7 +30,7 @@ export class Trie {
 }
 
 export class Node {
-    children: Map<string, Node>; // not-null // TODO: make children a Set object.
+    children: Map<string, Node>; // not-null
     parent: Node | null;
     metadata: NodeMetadata; // not-null
     materials: NodeMaterial[];
@@ -39,19 +38,19 @@ export class Node {
     constructor(materials?: NodeMaterial[] | null, parent: Node | null = null) {
         this.parent = parent;
         this.children = new Map<string, Node>();
+
         // additional information such as metadata and materials set via other methods.
         this.metadata = new NodeMetadata();
         this.materials = materials ?? [];
     }
 
     addChild(key: string, child: Node) {
-        // TODO: duplicate nodeChar check.
         this.children.set(key, child);
         child.parent = this;
     }
 
     /**
-     * Key function - form TRIE tree, Node with material is additional feature
+     * Add nood considering current node as root for @param fullstr. 
      * @param root 
      * @param fullstr full string includig this node's key
      * @param material 
@@ -80,23 +79,25 @@ export class Node {
         material.moveNode(this);
 
         if (updateAncestorMetadata && this.parent)
-            //TODO update parameter to [material]
             this.parent.updateParentMetadataUptoRoot(material);
     }
 
-    // TODO: get NodeMaterial[]
     updateParentMetadataUptoRoot(material: NodeMaterial) {
         var cursor: typeof this.parent = this;
         while (cursor?.metadata.updatePromisingMaterial(material)) {
             cursor = cursor.parent;
         }
     }
+
+    getMaterial(content: any): NodeMaterial | null {
+        return this.materials.find(m => m.hasContent(content)) ?? null;
+    }
 }
 
 export class NodeMetadata {
     private static readonly cutoff = 5;
 
-    promisingMaterials: NodeMaterial[];
+    promisingMaterials: NodeMaterial[]; // not-null
 
     constructor() {
         this.promisingMaterials = [];
@@ -104,7 +105,10 @@ export class NodeMetadata {
 
     updatePromisingMaterial(material: NodeMaterial): boolean {
         
-        if (this.promisingMaterials.some(m => m.isEqaul(material))) return true;
+        if (this.promisingMaterials.some(m => m.equal(material))) {
+            this.promisingMaterials.sort((a, b) => this.calculateImportance(b) - this.calculateImportance(a));
+            return true;
+        }
         
         if (this.promisingMaterials.length == 0) {
             this.promisingMaterials.push(material);
@@ -121,11 +125,6 @@ export class NodeMetadata {
         return true;
     }
 
-    /**
-     * calculate suggesting perference of material.
-     * @param material 
-     * @returns 
-     */
     calculateImportance(material: NodeMaterial): number {
         return material.useCount;
     }
@@ -137,7 +136,7 @@ export class NodeMaterial {
 
     useCount: number;
 
-    constructor(content: string, node: Node | null = null) {
+    constructor(content: any, node: Node | null = null) {
         this.content = content;
         this.node = node;
         this.useCount = 0;
@@ -145,10 +144,10 @@ export class NodeMaterial {
 
     moveNode(node: Node) {
         if (this.node) {
-            const index = node.materials.findIndex(m => m.isEqaul(this));
+            const index = node.materials.findIndex(m => m.equal(this));
             if (index >= 0) {
                 node.materials.splice(index, 1);
-            //node.metadata.updatePromisingMaterial(node.materials); TODO - after change updatePromisingMaterial
+                // TODO: remove current material from metadata upto root.
             }
         }
 
@@ -162,11 +161,14 @@ export class NodeMaterial {
 
     updateUsage() {
         this.useCount++;
-        // TODO update to use [this]
         this.node?.updateParentMetadataUptoRoot(this);
     }
 
-    isEqaul(material: NodeMaterial): boolean {
+    equal(material: NodeMaterial): boolean {
         return this.content == material.content;
+    }
+
+    hasContent(content: any): boolean {
+        return this.content === content;
     }
 }
