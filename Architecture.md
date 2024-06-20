@@ -7,41 +7,6 @@ And additionally each node of TRIE might include metadata such as defined in
 
 But for sake of convinient if Obsidian Plugin, It would be greatly reduce works if we can store TFile object for each node. 
 
-## A testing Idea
+# IDEA
 
-write Testable TRIE and Node classes and inherit these classes to include Obisidian specific objects.
-
-For example, make Node and Keywords class without Obsidian and create two subclasses ObsidianNode and ObsidianKeywords which depends on Obsidian API and extends Node and Keywords
-
-```ts
-interface ObsidianDependants {
-    name: string;
-}
-
-class Node_TEST {
-    letter: string
-    children: Node_TEST[]
-}
-
-class Keywords_TEST {
-    root: Node_TEST
-
-    constructor(root: Node_TEST) {
-        this.root = root;
-    }
-
-    addKeyword() {}
-    updateKeyword() {}
-}
-
-class CustomNode_TEST extends Node_TEST {
-    addtitional: ObsidianDependants | null
-}
-
-class CustomKeywords_TEST extends Keywords_TEST {
-    constructor(root: CustomNode_TEST) {
-        super(root);
-        this.root = root;
-    }
-}
-```
+Separate srcs to **obsidian_srcs** and **srcs**. Core business logic like trie and search engine will be implemented in **srcs** and any obsidian platform dependency is excluded from **srcs**. By eliminating obsidian platform dependency, **srcs** can be tested via **jest**.
