@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./test_out",
+    "types": ["jest"],
+  },
+  "include": [
+    "srcs/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "obsidian_srcs/**/*.ts",
+  ]
+}
