@@ -4,3 +4,4 @@
 - [ ] refactor build system for two purposes
     - [ ] test modules under ./srcs
     - [ ] build ./obsidian_srcs/main.ts
+        - [ ] in build.js, can I update target es? check PC/android/Obsidian versions
