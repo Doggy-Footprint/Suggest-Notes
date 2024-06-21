@@ -5,7 +5,7 @@ export class Trie {
         this.roots = roots?? new Map<string, Node>();
     }
 
-    addNode(fullstr: string, material: NodeMaterial) {
+    addNode(fullstr: string, material?: NodeMaterial) {
         const firstChar = fullstr.charAt(0);
         let root = this.roots.get(firstChar);
         if (!root) {
