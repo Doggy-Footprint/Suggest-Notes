@@ -10,3 +10,9 @@ But for sake of convinient if Obsidian Plugin, It would be greatly reduce works 
 # IDEA
 
 Separate srcs to **obsidian_srcs** and **srcs**. Core business logic like trie and search engine will be implemented in **srcs** and any obsidian platform dependency is excluded from **srcs**. By eliminating obsidian platform dependency, **srcs** can be tested via **jest**.
+
+# TDD
+
+- follow red green refactor. 
+- Test Trie without NodeMetadata or NodeMaterial
+- Test NodeMetadata NodeMaterial together
