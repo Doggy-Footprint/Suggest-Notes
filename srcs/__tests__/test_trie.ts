@@ -26,8 +26,11 @@ describe('Trie structure ', () => {
         trie.addNode('bat');
         trie.addNode('ball');
         expect(trie.findNode('bat')).not.toBeNull();
+        expect(trie.findNode('bat')?.children.size).toBe(0);
+        
         expect(trie.findNode('ba')).not.toBeNull();
         expect(trie.findNode('ball')).not.toBeNull();
+        
     });
 
     // Adding Duplicates
