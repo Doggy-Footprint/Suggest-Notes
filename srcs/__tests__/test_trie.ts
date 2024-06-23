@@ -27,18 +27,17 @@ describe('Trie structure ', () => {
         trie.addNode('ball');
         expect(trie.findNode('bat')).not.toBeNull();
         expect(trie.findNode('bat')?.children.size).toBe(0);
-        
+
         expect(trie.findNode('ba')).not.toBeNull();
         expect(trie.findNode('ball')).not.toBeNull();
         
     });
 
-    // Adding Duplicates
+    // Adding Duplicates, for test, these should move to testing Trie with materials and metadata
     test('Adding duplicate strings - root nodes', () => {
         trie.addNode('c');
         trie.addNode('c');
     });
-
     test('Adding duplicate strings - non root nodes', () => {
         trie.addNode('cat');
         trie.addNode('cat');
