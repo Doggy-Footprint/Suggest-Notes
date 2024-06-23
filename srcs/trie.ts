@@ -8,6 +8,8 @@ export class Trie {
     /**
      * Add a new Node to this Trie. This method does nothing for empty `fullstr`.
      * If `material` is provided, it will be added to the target node.
+     * 
+     * root nodes are not supposed to hold Material
      * @param fullstr string to add. Provide non-empty `fullstr`
      * @param material NodeMaterial for new Node
      * @returns 
@@ -46,8 +48,9 @@ export class Trie {
         if (query.length == 0) return [];
 
         const queryNode = this.findNode(query);
+        if (!queryNode) return [];
 
-        return [];
+        return queryNode.getMetadata();
     }
 }
 
@@ -102,6 +105,8 @@ export class Node {
     }
 
     addMaterial(material: NodeMaterial, updateAncestorMetadata: boolean) {
+        if (this.materials.some(m => m.equal(material))) return;
+
         this.materials.push(material);
         material.moveNode(this);
 
@@ -110,7 +115,7 @@ export class Node {
     }
 
     addMaterials(materials: NodeMaterial[], updateAncestorMetadata: boolean) {
-        this.materials.push(...materials);
+        this.materials.push(...materials.filter(m => this.materials.some(em => em.equal(m))));
         materials.forEach(m => m.moveNode(this));
 
         if (updateAncestorMetadata && this.parent) {
@@ -139,6 +144,11 @@ export class Node {
 
     getMaterials(): NodeMaterial[] {
         return this.materials;
+    }
+
+    getMetadata(): NodeMaterial[] {
+        //refactor to use getter
+        return this.metadata.promisingMaterials;
     }
 }
 
