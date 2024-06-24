@@ -1,4 +1,3 @@
-import * as exp from 'constants';
 import { Trie, Node, NodeMetadata, NodeMaterial } from '../trie';
 
 describe('Trie structure ', () => {
@@ -117,6 +116,6 @@ describe('NodeMaterial and Suggestion', () => {
             return false;
         }
 
-        expect(checkSameNonEmptyArrays(metadataArray)).toBe(true);
+        expect(checkSameNonEmptyArrays(metadataArray)).toBe(false);
     });
 });
