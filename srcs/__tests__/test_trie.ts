@@ -98,8 +98,8 @@ describe('NodeMaterial and Suggestion', () => {
         materialC = new NodeMaterial(objectC);
 
         trie.addNode(`${prefix}a`, materialA);
-        trie.addNode(`${prefix}b`, materialA);
-        trie.addNode(`${prefix}c`, materialA);
+        trie.addNode(`${prefix}b`, materialB);
+        trie.addNode(`${prefix}c`, materialC);
     });
 
     test('metadata consistency', () => {
@@ -111,11 +111,18 @@ describe('NodeMaterial and Suggestion', () => {
             metadataArray.push(trie.findNode(prefix.slice(0, i))!.getMetadata());
         }
 
-        // TODO
-        function checkSameNonEmptyArrays(metadataArray: NodeMaterial[][]): boolean {
-            return false;
+        function checkArrayConsistency(metadataArray: NodeMaterial[][]): boolean {
+            if (metadataArray.length == 0 || metadataArray[0].length == 0) return false;
+            const reference = metadataArray[0];
+            for (let i = 1; i < metadataArray.length; i++) {
+                if (metadataArray[i].length !== reference.length) return false;
+                for (let j = 0; j < reference.length; j++) {
+                    if (!metadataArray[i][j].equal(reference[j])) return false;
+                }
+            }
+            return true;
         }
 
-        expect(checkSameNonEmptyArrays(metadataArray)).toBe(false);
+        expect(checkArrayConsistency(metadataArray)).toBe(true);
     });
 });
