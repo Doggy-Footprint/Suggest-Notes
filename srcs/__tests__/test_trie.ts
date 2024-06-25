@@ -125,4 +125,23 @@ describe('NodeMaterial and Suggestion', () => {
 
         expect(checkArrayConsistency(metadataArray)).toBe(true);
     });
+
+    test('metadata validity', () => {
+        const nodeA = trie.findNode(`${prefix}a`)!;
+        const nodeB = trie.findNode(`${prefix}b`)!;
+        const nodeC = trie.findNode(`${prefix}c`)!;
+
+        for (let i = 0; i < 5; i++) nodeA.getMaterials()!.forEach(m => m.readContent());
+        for (let i = 0; i < 3; i++) nodeB.getMaterials()!.forEach(m => m.readContent());
+        for (let i = 0; i < 1; i++) nodeC.getMaterials()!.forEach(m => m.readContent());
+        
+        // [objectA, objectB, objectC] 
+        const metadata = trie.findNode(prefix)!.getMetadata();
+        expect(metadata).toBeDefined();
+
+        expect(metadata.length).toBe(3);
+        expect(metadata[0]!).toEqual(materialA);
+        expect(metadata[1]!).toEqual(materialB);
+        expect(metadata[2]!).toEqual(materialC);
+    });
 });
