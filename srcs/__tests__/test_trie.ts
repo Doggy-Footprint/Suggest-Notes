@@ -137,6 +137,7 @@ describe('NodeMaterial and Suggestion', () => {
         
         // [objectA, objectB, objectC] 
         const metadata = trie.suggestNodeMaterials(prefix);
+        
 
         expect(metadata.length).toBe(3);
         expect(metadata[0]!).toEqual(materialA);
