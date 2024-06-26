@@ -17,7 +17,7 @@ class CharMap extends Map<string, Node> {
 export class PrefixTree {
     private roots: CharMap = new CharMap();
 
-    add(str: string) {
+    add(str: string, content?: Content) {
         if (str.length === 0) return;
         if (str.length === 1) {
             this.addRoot(str); 
@@ -59,6 +59,8 @@ export class Node {
 
     // default valuse
     private children: CharMap = new CharMap();
+    private contents: Content[] = [];
+    private suggestion: SortedArray<Content> = new SortedArray<Content>(Content.compare);
 
     constructor(key: string, parent: Node | null = null) {
         this.key = key;
@@ -71,7 +73,92 @@ export class Node {
     getChildOfKey(key: string, makeOne: boolean): Node | undefined;
     public getChildOfKey(key: string, makeOne: boolean = false): Node | undefined{
         if (key.length !== 1) return;
-        // static type check dodging. boolean won't match for true / false in static type check (becuase compiler doesn't know.)
+
         return this.children.get(key, makeOne);
+    }
+
+    addContent(content: Content, updateSuggestion: boolean = true) {
+        // update Suggestion of this and parents upto the root
+    }
+
+    deletContent(content:Content, updateSuggestion: boolean = true) {
+        // update Suggestion of this and parents upto the root
+    }
+
+    getContents(): Content[] {
+        return [];
+    }
+
+    getSuggestion(): Content[] {
+        // return this.suggestion in form of Content[].
+        return [];
+    }
+}
+
+export class Content {
+    private content: any;
+    private node: Node | null;
+    private useCount: number;
+
+    constructor(content: any, node: Node | null = null) {
+        this.content = content;
+        this.node = node;
+        this.useCount = 0;
+    }
+
+    /**
+     * get content.
+     * TODO: this method update its own data to evaluate its score to sort. 
+     * And this should call it's `node`'s method to update suggestions.
+     * @returns 
+     */
+    public getContent(): any {
+        return 'stub!';
+    }
+
+    public getContentScore(): number {
+        return 0;
+    }
+
+    public moveNode(str: string) {
+
+    }
+
+    /**
+     * compare method used to sorting Content objects in descending order
+     * @param a 
+     * @param b 
+     * @returns 
+     */
+    public static compare(a: Content, b: Content): number {
+        return b.getContentScore() - a.getContentScore();
+    }
+
+    public isSmallerThan(content: Content): boolean {
+        return this.getContentScore() < content.getContentScore();
+    }
+}
+
+/**
+ * Class which keeps Content objects in descending order
+ */
+class SortedArray<T> {
+    private contents: T[] = [];
+    private compareFn: (a: T, b: T) => number;
+
+    constructor(compareFn: (a: T, b: T) => number) {
+        this.compareFn = compareFn;
+    }
+
+    public add(content: Content) {
+        
+    }
+
+    public delete(content: Content) {
+
+    }
+
+    private sort() {
+        this.contents.sort(this.compareFn);
     }
 }
