@@ -28,7 +28,6 @@ describe('PrefixTree basic operations', () => {
         'water', 'waste', 'wave', 'wax', 'web',
         'xylophone', 'xenon', 'xerox', 'x-ray', 'xenon',
         'yak', 'yard', 'yarn', 'year', 'yellow',
-        'zebra', 'zero', 'zone', 'zoom', 'zulu'
     ]
     const test_set_not_included: string[] = [
         'dapple', 'hatered', 'double monitor', 'july'
@@ -50,4 +49,10 @@ describe('PrefixTree basic operations', () => {
             expect(trie.search(word)).not.toBeDefined();
         }
     })
+
+    test('search for edge cases', () => {
+        expect(trie.search('')).not.toBeDefined();
+        expect(trie.search('z')).not.toBeDefined(); // no 'z-' starting element in test_set.
+        expect(trie.search('yellows')).not.toBeDefined();
+    });
 });
