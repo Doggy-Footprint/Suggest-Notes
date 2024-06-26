@@ -41,13 +41,13 @@ describe('PrefixTree basic operations', () => {
 
     test('search exisitng nodes', () => {
         for (const word of test_set) {
-            expect(trie.search(word)).not.toBeNull();
+            expect(trie.search(word)).toBeDefined();
         }
     });
 
     test('search non-existing nodes', () => {
         for (const word of test_set_not_included) {
-            expect(trie.search(word)).toBeNull();
+            expect(trie.search(word)).not.toBeDefined();
         }
     })
 });
