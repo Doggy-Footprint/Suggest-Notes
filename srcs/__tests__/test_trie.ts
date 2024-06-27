@@ -57,6 +57,10 @@ describe('PrefixTree basic operations', () => {
         expect(trie.search('')).not.toBeDefined();
         expect(trie.search('z')).not.toBeDefined(); // no 'z-' starting element in test_set.
         expect(trie.search('yellows')).not.toBeDefined();
+        
+        expect(trie.search('aBcDe')).not.toBeDefined();
+        trie.add('abcde');
+        expect(trie.search('aBcDe')).toBeDefined();
     });
 });
 
