@@ -26,9 +26,10 @@ export class PrefixTree {
 
         let cursor = this.roots.get(str.charAt(0), true);
 
-        for (let i = 0; i < str.length; i++) {
+        for (let i = 1; i < str.length; i++) {
             cursor = cursor.getChildOfKey(str.charAt(i), true);
         }
+        if (content) cursor.addContent(content);
     }
 
     private addRoot(key: string) {
@@ -44,7 +45,7 @@ export class PrefixTree {
 
         if (!cursor) return cursor;
 
-        for (let i = 0; i < str.length; i++) {
+        for (let i = 1; i < str.length; i++) {
             cursor = cursor.getChildOfKey(str.charAt(i));
             if (!cursor) return cursor;
         }
@@ -60,7 +61,7 @@ export class Node {
     // default valuse
     private children: CharMap = new CharMap();
     private contents: Content[] = [];
-    private suggestion: SortedArray<Content> = new SortedArray<Content>(Content.compare);
+    private suggestion: SortedArray<Content> = new SortedArray<Content>(Content.compare, Content.isSmallerThan);
 
     constructor(key: string, parent: Node | null = null) {
         this.key = key;
@@ -73,25 +74,37 @@ export class Node {
     getChildOfKey(key: string, makeOne: boolean): Node | undefined;
     public getChildOfKey(key: string, makeOne: boolean = false): Node | undefined{
         if (key.length !== 1) return;
-
-        return this.children.get(key, makeOne);
+        const child = this.children.get(key, makeOne);
+        if (child) child.parent = this;
+        return child;
     }
 
-    addContent(content: Content, updateSuggestion: boolean = true) {
+    public addContent(content: Content, updateSuggestion: boolean = true) {
+        this.contents.push(content);
+        content.updateNode(this);
+        if (updateSuggestion) this.updateSuggestionUptoRoot(content);
+    }
+
+    public deletContent(content:Content, updateSuggestion: boolean = true) {
         // update Suggestion of this and parents upto the root
     }
 
-    deletContent(content:Content, updateSuggestion: boolean = true) {
-        // update Suggestion of this and parents upto the root
+    public getContents(): Content[] {
+        return this.contents;
     }
 
-    getContents(): Content[] {
-        return [];
+    public getSuggestion(): Content[] {
+        return this.suggestion.getAsArray();
     }
 
-    getSuggestion(): Content[] {
-        // return this.suggestion in form of Content[].
-        return [];
+    // NOTE: this method is used for add
+    public updateSuggestionUptoRoot(content: Content) {
+        let cursor: Node | null = this;
+        // refactor: stop if root already has its own suggest and there is no need to update
+        while (cursor) {
+            cursor.suggestion.add(content)
+            cursor = cursor.parent;
+        }
     }
 }
 
@@ -108,20 +121,27 @@ export class Content {
 
     /**
      * get content.
-     * TODO: this method update its own data to evaluate its score to sort. 
-     * And this should call it's `node`'s method to update suggestions.
+     * @param udpate added for testing TODO: How to test getter with state change?
      * @returns 
      */
-    public getContent(): any {
-        return 'stub!';
+    public getContent(udpate: boolean = true): any {
+        if (udpate) {
+            this.useCount++;
+            this.node?.updateSuggestionUptoRoot(this);            
+        }
+        return this.content;
     }
 
     public getContentScore(): number {
-        return 0;
+        return this.useCount;
+    }
+
+    public updateNode(node: Node) {
+        this.node = node;
     }
 
     public moveNode(str: string) {
-
+        // TODO
     }
 
     /**
@@ -134,8 +154,8 @@ export class Content {
         return b.getContentScore() - a.getContentScore();
     }
 
-    public isSmallerThan(content: Content): boolean {
-        return this.getContentScore() < content.getContentScore();
+    public static isSmallerThan(a: Content, b: Content): boolean {
+        return a.getContentScore() < b.getContentScore();
     }
 }
 
@@ -144,21 +164,42 @@ export class Content {
  */
 class SortedArray<T> {
     private contents: T[] = [];
-    private compareFn: (a: T, b: T) => number;
+    private sortFn: (a: T, b: T) => number;
+    private isSmallerThanFn: (a: T, b: T) => boolean;
 
-    constructor(compareFn: (a: T, b: T) => number) {
-        this.compareFn = compareFn;
+    constructor(sortFn: (a: T, b: T) => number, isSmallerThanFn: (a: T, b: T) => boolean) {
+        this.sortFn = sortFn;
+        this.isSmallerThanFn = isSmallerThanFn;
     }
 
-    public add(content: Content) {
-        
+    add(content: T): undefined;
+    add(content: T, getResult: true): boolean;
+    add(content: T, getResult: false): undefined;
+    add(content: T, getResult: boolean): boolean | undefined;
+    // TODO: refactor after test
+    public add(content: T, getResult: boolean = false): boolean | undefined {
+        const original = [...this.contents];
+        const index = this.contents.findIndex((c => c === content));
+        if (index === -1) {
+            this.contents.push(content);
+        }
+        this.sort();
+        if (original.length !== this.contents.length) return true;
+        for (let i = 0; i < original.length; i++) {
+            if (original[i] !== this.contents[i]) return true;
+        }
+        return false;
     }
 
-    public delete(content: Content) {
-
+    public delete(content: T) {
+        // TODO later
     }
 
     private sort() {
-        this.contents.sort(this.compareFn);
+        this.contents.sort(this.sortFn);
+    }
+
+    getAsArray(): T[] {
+        return this.contents;
     }
 }

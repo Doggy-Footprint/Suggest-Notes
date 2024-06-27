@@ -1,11 +1,11 @@
-import { PrefixTree, Node, Content, SortedArray } from "../trie";
+import { PrefixTree, Node, Content } from "../trie";
 
 const testSet: string[] = [
     'apple', 'apricot', 'apartment', 'apply', 'approach',
     'banana', 'band', 'banner', 'bank', 'barrel',
     'cat', 'catalog', 'catch', 'category', 'cater',
     'dog', 'door', 'dorm', 'dot', 'double',
-    'elephant', 'elevator', 'eleven', 'elite', 'email', 'embrace', 'Emerge', 
+    'elephant', 'elevator', 'eleven', 'elite', 'email', 'embrace', 'emerge', 
     'fish', 'fist', 'fiscal', 'fit', 'fiction',
     'goat', 'goal', 'golf', 'gone', 'good',
     'hat', 'hate', 'hatch', 'happy', 'harden',
@@ -24,7 +24,7 @@ const testSet: string[] = [
     'umbrella', 'unicorn', 'unit', 'unique', 'user',
     'violet', 'vital', 'voice', 'void', 'volcano',
     'water', 'waste', 'wave', 'wax', 'web',
-    'xylophone', 'xenon', 'xerox', 'x-ray', 'xenon',
+    'xylophone', 'xenon', 'xerox', 'x-ray',
     'yak', 'yard', 'yarn', 'year', 'yellow',
 ]
 
@@ -62,10 +62,14 @@ describe('PrefixTree basic operations', () => {
 
 describe('PrefixTree with Content add and delete operations with checks for suggestions', () => {
     class Test_ContentObject {
-        content: string;
+        word: string;
 
-        constructor(content: string) {
-            this.content = content;
+        constructor(word: string) {
+            this.word = word;
+        }
+
+        public getWord(): string {
+            return this.word;
         }
     }
 
@@ -84,7 +88,7 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
             expect(node).toBeDefined();
             const content = node!.getContents();
             expect(content.length).toBe(1);
-            expect(content[0].getContent()).toBe(word);
+            expect(content[0].getContent().getWord()).toBe(word);
         }
     });
 
@@ -117,7 +121,7 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
             { word: 'elite', count: 4},
             { word: 'email', count: 5},
             { word: 'embrace', count: 6},
-            { word: 'emerge', count: 6}
+            { word: 'emerge', count: 7}
         ];
 
         // update metadata
@@ -139,33 +143,37 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
         const em_Suggestion = trie.search('em')!.getSuggestion();
         const e_Suggestion = trie.search('e')!.getSuggestion();
         
+
+        // TODO - how can I test with getter which changes object state?
         expect(elev_Suggestion.length).toBe(2);
-        expect(elev_Suggestion[0].getContent()).toBe('eleven');
-        expect(elev_Suggestion[1].getContent()).toBe('elevator');
+        expect(elev_Suggestion[0].getContent(false).getWord()).toBe('eleven');
+        expect(elev_Suggestion[1].getContent(false).getWord()).toBe('elevator');
 
         expect(ele_Suggestion.length).toBe(3);
-        expect(ele_Suggestion[0].getContent()).toBe('eleven');
-        expect(ele_Suggestion[1].getContent()).toBe('elevator');
-        expect(ele_Suggestion[2].getContent()).toBe('elephant');
+        expect(ele_Suggestion[0].getContent(false).getWord()).toBe('eleven');
+        expect(ele_Suggestion[1].getContent(false).getWord()).toBe('elevator');
+        expect(ele_Suggestion[2].getContent(false).getWord()).toBe('elephant');
 
         expect(el_Suggestion.length).toBe(4);
-        expect(el_Suggestion[0].getContent()).toBe('elite');
-        expect(el_Suggestion[1].getContent()).toBe('eleven');
-        expect(el_Suggestion[2].getContent()).toBe('elevator');
-        expect(el_Suggestion[3].getContent()).toBe('elephant');
+        expect(el_Suggestion[0].getContent(false).getWord()).toBe('elite');
+        expect(el_Suggestion[1].getContent(false).getWord()).toBe('eleven');
+        expect(el_Suggestion[2].getContent(false).getWord()).toBe('elevator');
+        expect(el_Suggestion[3].getContent(false).getWord()).toBe('elephant');
 
         expect(em_Suggestion.length).toBe(3);
-        expect(em_Suggestion[0].getContent()).toBe('emerge');
-        expect(em_Suggestion[1].getContent()).toBe('embrace');
-        expect(em_Suggestion[2].getContent()).toBe('email');
+        expect(em_Suggestion[0].getContent(false).getWord()).toBe('emerge');
+        expect(em_Suggestion[1].getContent(false).getWord()).toBe('embrace');
+        expect(em_Suggestion[2].getContent(false).getWord()).toBe('email');
 
         expect(e_Suggestion.length).toBe(7);
-        expect(e_Suggestion[0].getContent()).toBe('emerge');
-        expect(e_Suggestion[1].getContent()).toBe('embrace');
-        expect(e_Suggestion[2].getContent()).toBe('email');
-        expect(e_Suggestion[3].getContent()).toBe('elite');
-        expect(e_Suggestion[4].getContent()).toBe('eleven');
-        expect(e_Suggestion[5].getContent()).toBe('elevator');
-        expect(e_Suggestion[6].getContent()).toBe('elephant');
+        expect(e_Suggestion[0].getContent(false).getWord()).toBe('emerge');
+        expect(e_Suggestion[1].getContent(false).getWord()).toBe('embrace');
+        expect(e_Suggestion[2].getContent(false).getWord()).toBe('email');
+        expect(e_Suggestion[3].getContent(false).getWord()).toBe('elite');
+        expect(e_Suggestion[4].getContent(false).getWord()).toBe('eleven');
+        expect(e_Suggestion[5].getContent(false).getWord()).toBe('elevator');
+        expect(e_Suggestion[6].getContent(false).getWord()).toBe('elephant');
     });
 });
+
+// TODO: edge case - duplicate Content.
