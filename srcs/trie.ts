@@ -18,16 +18,17 @@ export class PrefixTree<V> {
     private roots: CharMap<V> = new CharMap();
 
     add(str: string, content?: Content<V>) {
-        if (str.length === 0) return;
-        if (str.length === 1) {
-            this.addRoot(str); 
+        const lowStr = str.toLowerCase();
+        if (lowStr.length === 0) return;
+        if (lowStr.length === 1) {
+            this.addRoot(lowStr); 
             return;
         }
 
-        let cursor = this.roots.get(str.charAt(0), true);
+        let cursor = this.roots.get(lowStr.charAt(0), true);
 
-        for (let i = 1; i < str.length; i++) {
-            cursor = cursor.getChildOfKey(str.charAt(i), true);
+        for (let i = 1; i < lowStr.length; i++) {
+            cursor = cursor.getChildOfKey(lowStr.charAt(i), true);
         }
         if (content) cursor.addContent(content);
     }
@@ -37,16 +38,18 @@ export class PrefixTree<V> {
         this.roots.set(key, new Node(key));
     }
 
+    // TODO: use only lower case
     search(str: string): Node<V> | undefined {
-        if (str.length === 0) return;
-        if (str.length === 1) return this.roots.get(str);
+        const lowStr = str.toLowerCase();
+        if (lowStr.length === 0) return;
+        if (lowStr.length === 1) return this.roots.get(lowStr);
 
-        let cursor = this.roots.get(str.charAt(0));
+        let cursor = this.roots.get(lowStr.charAt(0));
 
         if (!cursor) return cursor;
 
-        for (let i = 1; i < str.length; i++) {
-            cursor = cursor.getChildOfKey(str.charAt(i));
+        for (let i = 1; i < lowStr.length; i++) {
+            cursor = cursor.getChildOfKey(lowStr.charAt(i));
             if (!cursor) return cursor;
         }
 
