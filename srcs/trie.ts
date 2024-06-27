@@ -1,9 +1,9 @@
-class CharMap extends Map<string, Node> {
-    get(key: string): Node | undefined;
-    get(key: string, makeOne: true): Node;
-    get(key: string, makeOne: false): Node | undefined;
-    get(key: string, makeOne: boolean): Node | undefined;
-    get(key: string, makeOne: boolean = false): Node | undefined {
+class CharMap<V> extends Map<string, Node<V>> {
+    get(key: string): Node<V> | undefined;
+    get(key: string, makeOne: true): Node<V>;
+    get(key: string, makeOne: false): Node<V> | undefined;
+    get(key: string, makeOne: boolean): Node<V> | undefined;
+    get(key: string, makeOne: boolean = false): Node<V> | undefined {
         if (key.length === 0 || key.length > 1) return;
         let node = super.get(key);
         if (!node && makeOne) {
@@ -14,10 +14,10 @@ class CharMap extends Map<string, Node> {
     }
 }
 
-export class PrefixTree {
-    private roots: CharMap = new CharMap();
+export class PrefixTree<V> {
+    private roots: CharMap<V> = new CharMap();
 
-    add(str: string, content?: Content) {
+    add(str: string, content?: Content<V>) {
         if (str.length === 0) return;
         if (str.length === 1) {
             this.addRoot(str); 
@@ -37,7 +37,7 @@ export class PrefixTree {
         this.roots.set(key, new Node(key));
     }
 
-    search(str: string): Node | undefined {
+    search(str: string): Node<V> | undefined {
         if (str.length === 0) return;
         if (str.length === 1) return this.roots.get(str);
 
@@ -54,52 +54,52 @@ export class PrefixTree {
     }
 }
 
-export class Node {
+export class Node<V> {
     private readonly key: string;
-    private parent: Node | null;
+    private parent: Node<V> | null;
 
     // default valuse
-    private children: CharMap = new CharMap();
-    private contents: Content[] = [];
-    private suggestion: SortedArray<Content> = new SortedArray<Content>(Content.compare, Content.isSmallerThan);
+    private children: CharMap<V> = new CharMap<V>();
+    private contents: Content<V>[] = [];
+    private suggestion: SortedArray<Content<V>> = new SortedArray<Content<V>>(Content.compare, Content.isSmallerThan);
 
-    constructor(key: string, parent: Node | null = null) {
+    constructor(key: string, parent: Node<V> | null = null) {
         this.key = key;
         this.parent = parent;
     }
 
-    getChildOfKey(key: string): Node | undefined;
-    getChildOfKey(key: string, makeOne: true): Node;
-    getChildOfKey(key: string, makeOne: false): Node | undefined;
-    getChildOfKey(key: string, makeOne: boolean): Node | undefined;
-    public getChildOfKey(key: string, makeOne: boolean = false): Node | undefined{
+    getChildOfKey(key: string): Node<V> | undefined;
+    getChildOfKey(key: string, makeOne: true): Node<V>;
+    getChildOfKey(key: string, makeOne: false): Node<V> | undefined;
+    getChildOfKey(key: string, makeOne: boolean): Node<V> | undefined;
+    public getChildOfKey(key: string, makeOne: boolean = false): Node<V> | undefined{
         if (key.length !== 1) return;
         const child = this.children.get(key, makeOne);
         if (child) child.parent = this;
         return child;
     }
 
-    public addContent(content: Content, updateSuggestion: boolean = true) {
+    public addContent(content: Content<V>, updateSuggestion: boolean = true) {
         this.contents.push(content);
         content.updateNode(this);
         if (updateSuggestion) this.updateSuggestionUptoRoot(content);
     }
 
-    public deletContent(content:Content, updateSuggestion: boolean = true) {
+    public deletContent(content:Content<V>, updateSuggestion: boolean = true) {
         // update Suggestion of this and parents upto the root
     }
 
-    public getContents(): Content[] {
+    public getContents(): Content<V>[] {
         return this.contents;
     }
 
-    public getSuggestion(): Content[] {
+    public getSuggestion(): Content<V>[] {
         return this.suggestion.getAsArray();
     }
 
     // NOTE: this method is used for add
-    public updateSuggestionUptoRoot(content: Content) {
-        let cursor: Node | null = this;
+    public updateSuggestionUptoRoot(content: Content<V>) {
+        let cursor: Node<V> | null = this;
         // refactor: stop if root already has its own suggest and there is no need to update
         while (cursor) {
             cursor.suggestion.add(content)
@@ -108,12 +108,12 @@ export class Node {
     }
 }
 
-export class Content {
-    private content: any;
-    private node: Node | null;
+export class Content<V> {
+    private content: V;
+    private node: Node<V> | null;
     private useCount: number;
 
-    constructor(content: any, node: Node | null = null) {
+    constructor(content: V, node: Node<V> | null = null) {
         this.content = content;
         this.node = node;
         this.useCount = 0;
@@ -124,7 +124,7 @@ export class Content {
      * @param udpate added for testing TODO: How to test getter with state change?
      * @returns 
      */
-    public getContent(udpate: boolean = true): any {
+    public getContent(udpate: boolean = true): V {
         if (udpate) {
             this.useCount++;
             this.node?.updateSuggestionUptoRoot(this);            
@@ -136,7 +136,7 @@ export class Content {
         return this.useCount;
     }
 
-    public updateNode(node: Node) {
+    public updateNode(node: Node<V>) {
         this.node = node;
     }
 
@@ -150,11 +150,11 @@ export class Content {
      * @param b 
      * @returns 
      */
-    public static compare(a: Content, b: Content): number {
+    public static compare<T>(a: Content<T>, b: Content<T>): number {
         return b.getContentScore() - a.getContentScore();
     }
 
-    public static isSmallerThan(a: Content, b: Content): boolean {
+    public static isSmallerThan<T>(a: Content<T>, b: Content<T>): boolean {
         return a.getContentScore() < b.getContentScore();
     }
 }

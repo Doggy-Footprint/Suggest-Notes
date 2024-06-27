@@ -34,7 +34,7 @@ describe('PrefixTree basic operations', () => {
         'dapple', 'hatered', 'double monitor', 'july'
     ]
 
-    let trie: PrefixTree;
+    let trie: PrefixTree<string>;
 
     beforeAll(() => {
         trie = new PrefixTree();
@@ -73,12 +73,12 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
         }
     }
 
-    let trie: PrefixTree;
+    let trie: PrefixTree<Test_ContentObject>;
 
     beforeEach(() => {
         trie = new PrefixTree();
         for (const word of testSet) {
-            trie.add(word, new Content(new Test_ContentObject(word)));
+            trie.add(word, new Content<Test_ContentObject>(new Test_ContentObject(word)));
         }
     })
 
@@ -111,7 +111,7 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
         interface Test_Parameter {
             word: string;
             count: number;
-            node?: Node;
+            node?: Node<Test_ContentObject>;
         }
 
         const testingParameters: Test_Parameter[] = [
