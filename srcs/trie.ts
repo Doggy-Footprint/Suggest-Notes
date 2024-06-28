@@ -24,6 +24,7 @@ export class PrefixTree<V> {
             this.addRoot(lowStr); 
             return;
         }
+        if (str.startsWith(' ') || str.endsWith(' ')) return;
 
         let cursor = this.roots.get(lowStr.charAt(0), true);
 
@@ -43,6 +44,7 @@ export class PrefixTree<V> {
         const lowStr = str.toLowerCase();
         if (lowStr.length === 0) return;
         if (lowStr.length === 1) return this.roots.get(lowStr);
+        if (str.startsWith(' ') || str.endsWith(' ')) return;
 
         let cursor = this.roots.get(lowStr.charAt(0));
 
