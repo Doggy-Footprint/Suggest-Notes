@@ -61,6 +61,16 @@ describe('PrefixTree basic operations', () => {
         expect(trie.search('aBcDe')).not.toBeDefined();
         trie.add('abcde');
         expect(trie.search('aBcDe')).toBeDefined();
+
+        expect(trie.search('korea')).not.toBeDefined();
+        trie.add(' korea');
+        trie.add('korea ');
+        trie.add(' korea ');
+        expect(trie.search('korea')).not.toBeDefined();
+        expect(trie.search(' korea')).not.toBeDefined();
+        expect(trie.search('korea ')).not.toBeDefined();
+        expect(trie.search(' korea ')).not.toBeDefined();
+        // need for other space?: tab? etc.
     });
 });
 
