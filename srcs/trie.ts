@@ -62,6 +62,7 @@ export class PrefixTree<V> {
 export class Node<V> {
     private readonly key: string;
     private parent: Node<V> | null;
+    private keyword: string | undefined;
 
     // default valuse
     private children: CharMap<V> = new CharMap<V>();
@@ -110,6 +111,14 @@ export class Node<V> {
             cursor.suggestion.add(content)
             cursor = cursor.parent;
         }
+    }
+
+    public setKeyword(keyword: string) {
+        this.keyword = keyword;
+    }
+
+    public getKeyword(): string | undefined {
+        return this.keyword;
     }
 }
 
