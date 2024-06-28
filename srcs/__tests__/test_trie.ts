@@ -106,6 +106,12 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
         }
     });
 
+    test('leaf node keywords', () => {
+        expect(trie.search('yard')?.getKeyword()).toBe('yard');
+        expect(trie.search('yarn')?.getKeyword()).toBe('yarn');
+        expect(trie.search('yar')?.getKeyword()).not.toBeDefined();
+    });
+
     /**
      * e*
      * ├── l* 
