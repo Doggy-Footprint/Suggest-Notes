@@ -39,11 +39,9 @@ export class KeywordSuggest extends EditorSuggest<Content<TFile>> {
             if (isKeywordNote) {
                 let content: Content<TFile> = new Content<TFile>(file);
                 this.trie.add(file.name.split('.')[0], content);
-                // console.log(`keyword: ${file.name.split('.')[0]}, name: ${content.getContent(false).name}`);
                 if (!Array.isArray(this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases)) continue;
                 for (const alias of this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases) {
                     this.trie.add(alias, content);
-                    // console.log(`keyword: ${alias}, name: ${content.getContent(false).name}`)
                 }
             }
         }
@@ -96,12 +94,12 @@ export class KeywordSuggest extends EditorSuggest<Content<TFile>> {
     }
 
     renderSuggestion(value: Content<TFile>, el: HTMLElement): void {
-        const outer = el.createDiv().setText(value.getContent(false).name);
+        const outer = el.createDiv().setText(value.read(false).name);
     }
 
     selectSuggestion(value: Content<TFile>, evt: MouseEvent | KeyboardEvent): void {
         if (!this.context) return;
         const { start, end } = this.context;
-        this.context?.editor.replaceRange(`[[${value.getContent().path}]]`, start, end);
+        this.context?.editor.replaceRange(`[[${value.read().path}]]`, start, end);
     }
 }
