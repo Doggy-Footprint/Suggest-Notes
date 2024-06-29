@@ -109,7 +109,7 @@ describe('PrefixTree with user provided Content - add and delete operations with
             expect(node).toBeDefined();
             const content = node!.getContents();
             expect(content.length).toBe(1);
-            expect(content[0].getContent().getWord()).toBe(word);
+            expect(content[0].read().getWord()).toBe(word);
         }
     });
 
@@ -158,7 +158,7 @@ describe('PrefixTree with user provided Content - add and delete operations with
             param.node = node!;
             for (let i = 0; i < param.count; i++) {
                 // getContents()[0] is tested in 'Search words'
-                param.node.getContents()[0]!.getContent();
+                param.node.getContents()[0]!.read();
             }
         }
 
@@ -173,33 +173,33 @@ describe('PrefixTree with user provided Content - add and delete operations with
 
         // TODO - how can I test with getter which changes object state?
         expect(elev_Suggestion.length).toBe(2);
-        expect(elev_Suggestion[0].getContent(false).getWord()).toBe('eleven');
-        expect(elev_Suggestion[1].getContent(false).getWord()).toBe('elevator');
+        expect(elev_Suggestion[0].read(false).getWord()).toBe('eleven');
+        expect(elev_Suggestion[1].read(false).getWord()).toBe('elevator');
 
         expect(ele_Suggestion.length).toBe(3);
-        expect(ele_Suggestion[0].getContent(false).getWord()).toBe('eleven');
-        expect(ele_Suggestion[1].getContent(false).getWord()).toBe('elevator');
-        expect(ele_Suggestion[2].getContent(false).getWord()).toBe('elephant');
+        expect(ele_Suggestion[0].read(false).getWord()).toBe('eleven');
+        expect(ele_Suggestion[1].read(false).getWord()).toBe('elevator');
+        expect(ele_Suggestion[2].read(false).getWord()).toBe('elephant');
 
         expect(el_Suggestion.length).toBe(4);
-        expect(el_Suggestion[0].getContent(false).getWord()).toBe('elite');
-        expect(el_Suggestion[1].getContent(false).getWord()).toBe('eleven');
-        expect(el_Suggestion[2].getContent(false).getWord()).toBe('elevator');
-        expect(el_Suggestion[3].getContent(false).getWord()).toBe('elephant');
+        expect(el_Suggestion[0].read(false).getWord()).toBe('elite');
+        expect(el_Suggestion[1].read(false).getWord()).toBe('eleven');
+        expect(el_Suggestion[2].read(false).getWord()).toBe('elevator');
+        expect(el_Suggestion[3].read(false).getWord()).toBe('elephant');
 
         expect(em_Suggestion.length).toBe(3);
-        expect(em_Suggestion[0].getContent(false).getWord()).toBe('emerge');
-        expect(em_Suggestion[1].getContent(false).getWord()).toBe('embrace');
-        expect(em_Suggestion[2].getContent(false).getWord()).toBe('email');
+        expect(em_Suggestion[0].read(false).getWord()).toBe('emerge');
+        expect(em_Suggestion[1].read(false).getWord()).toBe('embrace');
+        expect(em_Suggestion[2].read(false).getWord()).toBe('email');
 
         expect(e_Suggestion.length).toBe(7);
-        expect(e_Suggestion[0].getContent(false).getWord()).toBe('emerge');
-        expect(e_Suggestion[1].getContent(false).getWord()).toBe('embrace');
-        expect(e_Suggestion[2].getContent(false).getWord()).toBe('email');
-        expect(e_Suggestion[3].getContent(false).getWord()).toBe('elite');
-        expect(e_Suggestion[4].getContent(false).getWord()).toBe('eleven');
-        expect(e_Suggestion[5].getContent(false).getWord()).toBe('elevator');
-        expect(e_Suggestion[6].getContent(false).getWord()).toBe('elephant');
+        expect(e_Suggestion[0].read(false).getWord()).toBe('emerge');
+        expect(e_Suggestion[1].read(false).getWord()).toBe('embrace');
+        expect(e_Suggestion[2].read(false).getWord()).toBe('email');
+        expect(e_Suggestion[3].read(false).getWord()).toBe('elite');
+        expect(e_Suggestion[4].read(false).getWord()).toBe('eleven');
+        expect(e_Suggestion[5].read(false).getWord()).toBe('elevator');
+        expect(e_Suggestion[6].read(false).getWord()).toBe('elephant');
     });
 });
 
@@ -255,7 +255,7 @@ describe('A Content object in muliple Node objects', () => {
                 node.addContent(content, keyword, true);
             }
             for (let i = 0; i < testCase.readCount; i++) {
-                content.getContent(true);
+                content.read(true);
             }
         }
     });
@@ -278,7 +278,7 @@ describe('A Content object in muliple Node objects', () => {
     test('Suggestion validity and consistency', () => {
         const agcNode = trie.search('acg')!;
         for (let i = 0; i < 20; i++) {
-            agcNode.getContents()[0].getContent();
+            agcNode.getContents()[0].read();
         }
 
         // variable names use '_' for readability
@@ -304,7 +304,7 @@ describe('A Content object in muliple Node objects', () => {
             if (a.length !== strs.length) return false;
             
             for (let i = 0; i < a.length; i++) {
-                if (a[i].getContent(false) !== strs[i]) return false;
+                if (a[i].read(false) !== strs[i]) return false;
             }
 
             return true;

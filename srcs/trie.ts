@@ -120,29 +120,30 @@ export class Node<V> {
 }
 
 export class Content<V> {
-    private content: V;
+    private value: V;
     private node: Set<Node<V>> = new Set();
     private useCount: number;
 
-    constructor(content: V) {
-        this.content = content;
+
+    constructor(value: V) {
+        this.value = value;
         this.useCount = 0;
     }
 
     /**
-     * get content and update metadata, which is used for scoring each content when suggesting
+     * read value and update metadata, which is used for scoring each content when suggesting
      * @param udpate added for testing TODO: How to test getter with state change?
      * @returns 
      */
-    public getContent(udpate: boolean = true): V {
+    public read(udpate: boolean = true): V {
         if (udpate) {
             this.useCount++;
             this.node.forEach(n => n.updateSuggestionUptoRoot(this));
         }
-        return this.content;
+        return this.value;
     }
 
-    public getContentScore(): number {
+    public getScore(): number {
         return this.useCount;
     }
 
@@ -161,11 +162,11 @@ export class Content<V> {
      * @returns 
      */
     public static compare<T>(a: Content<T>, b: Content<T>): number {
-        return b.getContentScore() - a.getContentScore();
+        return b.getScore() - a.getScore();
     }
 
     public static isSmallerThan<T>(a: Content<T>, b: Content<T>): boolean {
-        return a.getContentScore() < b.getContentScore();
+        return a.getScore() < b.getScore();
     }
 }
 
