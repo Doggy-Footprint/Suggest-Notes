@@ -37,11 +37,25 @@ For our mission is user convinience and personally I'm very tired of adding case
 - latency of update in metadataCache
 - If any change possible to be omitted
 
-## Suggest.onTrigger
+## Suggest
+
+### onTrigger
 
 Need to determine when to show suggest 
 - [ ] TODO later.
 
+## keywords
+Current version allows user to get Content<TFile> with relatively short search query.
+The problem is to determine which keyword(file name, alias, etc) should use.
+
+The thing is, the program can't know user's thought unless the user gives it. 
+And in technical point of view, each node can keep keywords with its Content, and suggest user the Content<TFile> and keyword at the same time. - this is for later update.
+
+For now a option is let user to decide which keywords to use based on current input, for example, if the user typed 'ip', and the plugin showed iPad, and iPhone. And user choosed iPad. Now assume that iPad note has aliases of ipad, pad, apple pad. then from the input ip, we can filter keywords to ipad and iPad. It would be better if we show such keywords ahead and the others below.
+
+- [ ] How to make another suggetion container based on selectSuggestion?
+
 ## Additional Thoughts
 
 ### How to handle typo?
+
