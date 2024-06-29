@@ -61,6 +61,7 @@ For now a option is let user to decide which keywords to use based on current in
 1. use wrapper instead of Content<TFile> for type of EditorSuggest class. and Include DOM object into the wrapper so that render some kinda keywords suggestion after selectin TFile
 2. From user input, filter Content's related nodes' keyword and Show the TFile for each keyword filtered. Manage keyword preferrence based in Content. - current choice
 3. Modify PrefixTree so that metadata of Node include keyword with Content object.
+4. modify TFile's frontmatter - not likely.
 
 ## Additional Thoughts
 
