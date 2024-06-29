@@ -1,6 +1,6 @@
 import { PrefixTree, Node, Content } from "../trie";
 
-const testSet: string[] = [
+const generalTestSet: string[] = [
     'apple', 'apricot', 'apartment', 'apply', 'approach',
     'banana', 'band', 'banner', 'bank', 'barrel',
     'cat', 'catalog', 'catch', 'category', 'cater',
@@ -38,11 +38,11 @@ describe('PrefixTree basic operations', () => {
 
     beforeAll(() => {
         trie = new PrefixTree();
-        for (const word of testSet) trie.add(word);
+        for (const word of generalTestSet) trie.add(word);
     })
 
     test('search exisitng nodes', () => {
-        for (const word of testSet) {
+        for (const word of generalTestSet) {
             expect(trie.search(word)).toBeDefined();
         }
     });
@@ -54,14 +54,21 @@ describe('PrefixTree basic operations', () => {
     })
 
     test('search for edge cases', () => {
+        // emtpy string
         expect(trie.search('')).not.toBeDefined();
+
+        // root string - which does not exist
         expect(trie.search('z')).not.toBeDefined(); // no 'z-' starting element in test_set.
+
+        // a existing node + extra char
         expect(trie.search('yellows')).not.toBeDefined();
         
+        // case ignoring
         expect(trie.search('aBcDe')).not.toBeDefined();
         trie.add('abcde');
         expect(trie.search('aBcDe')).toBeDefined();
 
+        // triming both side
         expect(trie.search('korea')).not.toBeDefined();
         trie.add(' korea');
         trie.add('korea ');
@@ -74,7 +81,7 @@ describe('PrefixTree basic operations', () => {
     });
 });
 
-describe('PrefixTree with Content add and delete operations with checks for suggestions', () => {
+describe('PrefixTree with user provided Content - add and delete operations with checks for suggestions', () => {
     class Test_ContentObject {
         word: string;
 
@@ -91,13 +98,13 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
 
     beforeEach(() => {
         trie = new PrefixTree();
-        for (const word of testSet) {
+        for (const word of generalTestSet) {
             trie.add(word, new Content<Test_ContentObject>(new Test_ContentObject(word)));
         }
     })
 
     test('Search words', () => {
-        for (const word of testSet) {
+        for (const word of generalTestSet) {
             const node = trie.search(word);
             expect(node).toBeDefined();
             const content = node!.getContents();
@@ -196,4 +203,126 @@ describe('PrefixTree with Content add and delete operations with checks for sugg
     });
 });
 
-// TODO: edge case - duplicate Content.
+/**
+ * a
+ * ├── b - ab (not leaf)
+ * │   ├── d - abd (not leaf)
+ * │   │   ├── i - abdi
+ * │   │   └── j - abdj (not leaf)
+ * │   │       ├── k - abdjk
+ * │   │       └── l - abdjl
+ * │   └── e - abe
+ * └── c - ac(not leaf)
+ *     ├── f - acf
+ *     ├── g - acg
+ *     └── h - ach
+ */
+describe('A Content object in muliple Node objects', () => {
+    let trie: PrefixTree<string>;
+    const trieLeaves = [
+        'abdi', 'abdjk', 'abdjl', 'abe', 'acf', 'acg', 'ach'
+    ]
+    const testSet = [
+        { 
+            content: 'chicken', 
+            keywords: ['abdi', 'abe', 'acf', 'ach'],
+            readCount: 10
+        },
+        {
+            content: 'watch',
+            keywords: ['ab', 'acg'],
+            readCount: 5
+        },
+        {
+            content: 'dog', 
+            keywords: ['ab', 'abd', 'abe', 'acf'],
+            readCount: 1
+        }
+    ]
+
+    beforeAll(() => {
+        trie = new PrefixTree();
+        for (const leaf of trieLeaves) {
+            trie.add(leaf);
+        }
+    });
+
+    beforeEach(() => {
+        for(const testCase of testSet) {
+            const content = new Content<string>(testCase.content);
+            for (const keyword of testCase.keywords) {
+                const node = trie.search(keyword)!;
+                node.addContent(content, keyword, true);
+            }
+            for (let i = 0; i < testCase.readCount; i++) {
+                content.getContent(true);
+            }
+        }
+    });
+
+    /**
+    * a
+    * ├── b - ab - dog, watch
+    * │   ├── d - abd - dog
+    * │   │   ├── i - abdi - chicken
+    * │   │   └── j - abdj - abdj
+    * │   │       ├── k - abdjk - abdjk
+    * │   │       └── l - abdjl - abdjl
+    * │   └── e - abe - chicken, dog
+    * └── c - ac
+    *     ├── f - acf - chicken, dog
+    *     ├── g - acg - watch
+    *     └── h - ach - chicken
+    * 
+    */
+    test('Suggestion validity and consistency', () => {
+        const agcNode = trie.search('acg')!;
+        for (let i = 0; i < 20; i++) {
+            agcNode.getContents()[0].getContent();
+        }
+
+        // variable names use '_' for readability
+        const a_Suggestion = trie.search('a')!.getSuggestion();
+        const ab_Suggestion = trie.search('ab')!.getSuggestion();
+        const abd_Suggestion = trie.search('abd')!.getSuggestion();
+        const abdi_Suggestion = trie.search('abdi')!.getSuggestion();
+        const abdj_Suggestion = trie.search('abdj')!.getSuggestion();
+        const abe_Suggestion = trie.search('abe')!.getSuggestion();
+        const ac_Suggestion = trie.search('ac')!.getSuggestion();
+
+        function checkSuggestionEquality(a: Content<string>[], b: Content<string>[]): boolean {
+            if (a.length !== b.length) return false;
+
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+
+            return true;
+        }
+
+        function checkSuggestion(a: Content<string>[], strs: string[]): boolean {
+            if (a.length !== strs.length) return false;
+            
+            for (let i = 0; i < a.length; i++) {
+                if (a[i].getContent(false) !== strs[i]) return false;
+            }
+
+            return true;
+        }
+
+        // suggestion order: watch -> chicken -> dog
+        expect(checkSuggestion(a_Suggestion, ['watch', 'chicken', 'dog'])).toBeTruthy();
+
+        expect(checkSuggestionEquality(ab_Suggestion, a_Suggestion)).toBeTruthy();
+
+        expect(checkSuggestion(abd_Suggestion, ['chicken', 'dog'])).toBeTruthy();
+
+        expect(checkSuggestion(abdi_Suggestion, ['chicken'])).toBeTruthy();
+
+        expect(abdj_Suggestion.length).toBe(0);
+
+        expect(checkSuggestion(abe_Suggestion, ['chicken', 'dog'])).toBeTruthy();
+
+        expect(checkSuggestion(ac_Suggestion, ['watch', 'chicken', 'dog'])).toBeTruthy();
+    });
+});
