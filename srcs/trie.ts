@@ -31,7 +31,8 @@ export class PrefixTree<V> {
         for (let i = 1; i < lowStr.length; i++) {
             cursor = cursor.getChildOfKey(lowStr.charAt(i), true);
         }
-        if (content) cursor.addContent(content, str);
+        if (content) cursor.addContent(content);
+
     }
 
     private addRoot(key: string) {
@@ -62,7 +63,6 @@ export class PrefixTree<V> {
 export class Node<V> {
     private readonly key: string;
     private parent: Node<V> | null;
-    private keyword: string | undefined;
 
     // default valuse
     private children: CharMap<V> = new CharMap<V>();
@@ -85,9 +85,8 @@ export class Node<V> {
         return child;
     }
 
-    public addContent(content: Content<V>, keyword: string, updateSuggestion: boolean = true) {
+    public addContent(content: Content<V>, updateSuggestion: boolean = true) {
         this.contents.push(content);
-        this.keyword = keyword;
         content.updateNode(this);
         if (updateSuggestion) this.updateSuggestionUptoRoot(content);
     }
@@ -112,10 +111,6 @@ export class Node<V> {
             cursor.suggestion.add(content)
             cursor = cursor.parent;
         }
-    }
-
-    public getKeyword(): string | undefined {
-        return this.keyword;
     }
 }
 

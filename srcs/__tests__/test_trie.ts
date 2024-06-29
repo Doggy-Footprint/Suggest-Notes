@@ -112,13 +112,7 @@ describe('PrefixTree with user provided Content - add and delete operations with
             expect(content[0].read().getWord()).toBe(word);
         }
     });
-
-    test('leaf node keywords', () => {
-        expect(trie.search('yard')?.getKeyword()).toBe('yard');
-        expect(trie.search('yarn')?.getKeyword()).toBe('yarn');
-        expect(trie.search('yar')?.getKeyword()).not.toBeDefined();
-    });
-
+    
     /**
      * e*
      * ├── l* 
@@ -252,7 +246,7 @@ describe('A Content object in muliple Node objects', () => {
             const content = new Content<string>(testCase.content);
             for (const keyword of testCase.keywords) {
                 const node = trie.search(keyword)!;
-                node.addContent(content, keyword, true);
+                node.addContent(content, true);
             }
             for (let i = 0; i < testCase.readCount; i++) {
                 content.read(true);
