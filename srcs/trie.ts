@@ -121,24 +121,23 @@ export class Node<V> {
 
 export class Content<V> {
     private content: V;
-    private node: Node<V> | null;
+    private node: Set<Node<V>> = new Set();
     private useCount: number;
 
-    constructor(content: V, node: Node<V> | null = null) {
+    constructor(content: V) {
         this.content = content;
-        this.node = node;
         this.useCount = 0;
     }
 
     /**
-     * get content.
+     * get content and update metadata, which is used for scoring each content when suggesting
      * @param udpate added for testing TODO: How to test getter with state change?
      * @returns 
      */
     public getContent(udpate: boolean = true): V {
         if (udpate) {
             this.useCount++;
-            this.node?.updateSuggestionUptoRoot(this);            
+            this.node.forEach(n => n.updateSuggestionUptoRoot(this));
         }
         return this.content;
     }
@@ -148,13 +147,13 @@ export class Content<V> {
     }
 
     public updateNode(node: Node<V>) {
-        this.node = node;
+        this.node.add(node);
     }
 
-    public moveNode(str: string) {
+    public deleteNode(node: Node<V>) {
         // TODO
     }
-
+    
     /**
      * compare method used to sorting Content objects in descending order
      * @param a 
