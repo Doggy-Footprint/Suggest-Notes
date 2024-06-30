@@ -195,6 +195,8 @@ describe('PrefixTree with user provided Content - add and delete operations with
         expect(e_Suggestion[5].read(false).getWord()).toBe('elevator');
         expect(e_Suggestion[6].read(false).getWord()).toBe('elephant');
     });
+
+    // TODO delete Content from Node
 });
 
 /**
@@ -234,26 +236,6 @@ describe('A Content object in muliple Node objects', () => {
         }
     ]
 
-    beforeAll(() => {
-        trie = new PrefixTree();
-        for (const leaf of trieLeaves) {
-            trie.add(leaf);
-        }
-    });
-
-    beforeEach(() => {
-        for(const testCase of testSet) {
-            const content = new Content<string>(testCase.content);
-            for (const keyword of testCase.keywords) {
-                const node = trie.search(keyword)!;
-                node.addContent(content, true);
-            }
-            for (let i = 0; i < testCase.readCount; i++) {
-                content.read(true);
-            }
-        }
-    });
-
     /**
     * a
     * ├── b - ab - dog, watch
@@ -269,6 +251,23 @@ describe('A Content object in muliple Node objects', () => {
     *     └── h - ach - chicken
     * 
     */
+    beforeEach(() => {
+        trie = new PrefixTree();
+        for (const leaf of trieLeaves) {
+            trie.add(leaf);
+        }
+        for(const testCase of testSet) {
+            const content = new Content<string>(testCase.content);
+            for (const keyword of testCase.keywords) {
+                const node = trie.search(keyword)!;
+                node.addContent(content, keyword, true);
+            }
+            for (let i = 0; i < testCase.readCount; i++) {
+                content.read(true);
+            }
+        }
+    });
+
     test('Suggestion validity and consistency', () => {
         const agcNode = trie.search('acg')!;
         for (let i = 0; i < 20; i++) {
@@ -304,7 +303,7 @@ describe('A Content object in muliple Node objects', () => {
             return true;
         }
 
-        // suggestion order: watch -> chicken -> dog
+        // suggestion order: watch (25) -> chicken (10) -> dog (1)
         expect(checkSuggestion(a_Suggestion, ['watch', 'chicken', 'dog'])).toBeTruthy();
 
         expect(checkSuggestionEquality(ab_Suggestion, a_Suggestion)).toBeTruthy();
@@ -318,5 +317,91 @@ describe('A Content object in muliple Node objects', () => {
         expect(checkSuggestion(abe_Suggestion, ['chicken', 'dog'])).toBeTruthy();
 
         expect(checkSuggestion(ac_Suggestion, ['watch', 'chicken', 'dog'])).toBeTruthy();
+    });
+
+    // TODO refactor or document
+    test('Keywords of Content objects - check inclusion', () => {
+        function haveSameElements(a: any[], b: any[]): boolean {
+            if (a.length !== b.length) return false;
+            const diff = a.some((ae, i) => ae !== b[i]);
+
+            return !diff;
+        }
+
+        // chicken
+        const chicken = trie.search('a')?.getSuggestion()[0]!;
+        expect(chicken).toBeDefined();
+        expect(haveSameElements(chicken.getKeywords('ab'), ['abdi', 'abe'])).toBeTruthy();
+        expect(haveSameElements(chicken.getKeywords('ac'), ['acf', 'ach'])).toBeTruthy();
+        
+        {
+            chicken.updateKeywords('abdi');
+            chicken.updateKeywords('abdi');
+            chicken.updateKeywords('abe');
+        }
+
+        // abdi:2, abe: 1
+        expect(chicken.getKeywords('ab')).toEqual(['abdi', 'abe']);
+
+        {
+            chicken.updateKeywords('abe');
+            chicken.updateKeywords('abe');
+        }
+
+        // abe: 3, abdi: 2
+        expect(chicken.getKeywords('ab')).toEqual(['abe', 'abdi']);
+
+        // watch
+        const watch = trie.search('a')?.getSuggestion()[1]!;
+        expect(watch).toBeDefined();
+        expect(haveSameElements(watch.getKeywords('ab'), ['ab'])).toBeTruthy();
+        expect(haveSameElements(watch.getKeywords('ac'), ['acg'])).toBeTruthy();
+
+        {
+            watch.updateKeywords('ab');
+            watch.updateKeywords('ab');
+            watch.updateKeywords('acg');
+        }
+        
+        // ab: 2, acg: 1
+        expect(watch.getKeywords('a')).toEqual(['ab', 'acg']);
+
+        {
+            watch.updateKeywords('acg'); 
+            watch.updateKeywords('acg');
+        }
+
+        // acg: 3, ab: 2
+        expect(watch.getKeywords('a')).toEqual(['acg', 'ab']);
+
+        // dog
+        const dog = trie.search('a')?.getSuggestion()[2]!;
+        expect(dog).toBeDefined();
+        expect(haveSameElements(dog.getKeywords('ab'), ['ab', 'abd', 'abe'])).toBeTruthy();
+        expect(haveSameElements(dog.getKeywords('ac'), ['acf'])).toBeTruthy();
+
+        {
+            dog.updateKeywords('abd');
+            dog.updateKeywords('abd');
+            dog.updateKeywords('abd');
+            dog.updateKeywords('abe');
+            dog.updateKeywords('abe');
+            dog.updateKeywords('ab');
+        }
+
+        // abd: 3, abe: 2, ab: 1
+        expect(dog.getKeywords('ab')).toEqual(['abd', 'abe', 'ab']);
+
+        {
+            dog.updateKeywords('ab');
+            dog.updateKeywords('ab');
+            dog.updateKeywords('ab');
+            dog.updateKeywords('ab');
+            dog.updateKeywords('abd');
+            dog.updateKeywords('abe');
+        }
+
+        // ab: 5, abd: 4, abe: 3
+        expect(dog.getKeywords('ab')).toEqual(['ab', 'abd', 'abe']);
     });
 });
