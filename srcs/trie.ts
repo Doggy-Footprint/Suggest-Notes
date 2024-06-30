@@ -32,7 +32,6 @@ export class PrefixTree<V> {
             cursor = cursor.getChildOfKey(lowStr.charAt(i), true);
         }
         if (content) cursor.addContent(content);
-
     }
 
     private addRoot(key: string) {
@@ -85,9 +84,10 @@ export class Node<V> {
         return child;
     }
 
-    public addContent(content: Content<V>, updateSuggestion: boolean = true) {
+    public addContent(content: Content<V>, keyword: string = '', updateSuggestion: boolean = true) {
         this.contents.push(content);
         content.updateNode(this);
+        content.addKeyword(keyword);
         if (updateSuggestion) this.updateSuggestionUptoRoot(content);
     }
 
@@ -114,11 +114,44 @@ export class Node<V> {
     }
 }
 
+class Keyword {
+    keyword: string;
+    private useCount: number;
+
+    constructor(keyword: string, useCount: number = 0) {
+        this.keyword = keyword;
+        this.useCount = useCount;
+    }
+
+    public udpateUsage() {
+        this.useCount++;
+    }
+
+    public getScore(): number {
+        return this.useCount;
+    }
+
+    public static compare(a: Keyword, b: Keyword): number {
+        return b.getScore() - a.getScore();
+    }
+
+    public static isSmallerThan(a: Keyword, b: Keyword): boolean {
+        return a.getScore() < b.getScore();
+    }
+
+    public static equal(a: Keyword, b: Keyword): boolean {
+        return a.keyword === b.keyword;
+    }
+}
+
 export class Content<V> {
     private value: V;
     private node: Set<Node<V>> = new Set();
     private useCount: number;
-
+    private keywords: SortedArray<Keyword> 
+        = new SortedArray(Keyword.compare, Keyword.isSmallerThan, Keyword.equal);
+    // consider serialization for metadata such as useCount, { keyword: string, count: number }, lastUse, etc.
+    // TODO consider update and configuration migration.
 
     constructor(value: V) {
         this.value = value;
@@ -150,6 +183,25 @@ export class Content<V> {
         // TODO
     }
     
+    getKeywords(prefix: string): string[] {
+        return this.keywords.getAsArray().map(k => k.keyword).filter(k => k.startsWith(prefix));
+    }
+
+    public addKeyword(keyword: string) {
+        this.keywords.add(new Keyword(keyword));
+    }
+
+    public updateKeywords(keyword: string) {
+        const element = this.keywords.getAsArray().filter(k => k.keyword === keyword)[0];
+        if (!element) return;
+        element.udpateUsage();
+        this.keywords.add(element);
+    }
+
+    deleteKeywords() {
+        // TODO
+    }
+
     /**
      * compare method used to sorting Content objects in descending order
      * @param a 
@@ -172,10 +224,12 @@ class SortedArray<T> {
     private contents: T[] = [];
     private sortFn: (a: T, b: T) => number;
     private isSmallerThanFn: (a: T, b: T) => boolean;
+    private equalFn: (a: T, b: T) => boolean;
 
-    constructor(sortFn: (a: T, b: T) => number, isSmallerThanFn: (a: T, b: T) => boolean) {
+    constructor(sortFn: (a: T, b: T) => number, isSmallerThanFn: (a: T, b: T) => boolean, eqaulFn?: (a: T, b: T) => boolean) {
         this.sortFn = sortFn;
         this.isSmallerThanFn = isSmallerThanFn;
+        this.equalFn = eqaulFn ?? ((a, b) => a === b);
     }
 
     add(content: T): undefined;
@@ -185,14 +239,14 @@ class SortedArray<T> {
     // TODO: refactor after test
     public add(content: T, getResult: boolean = false): boolean | undefined {
         const original = [...this.contents];
-        const index = this.contents.findIndex((c => c === content));
+        const index = this.contents.findIndex((c => this.equalFn(c, content)));
         if (index === -1) {
             this.contents.push(content);
         }
-        this.sort();
+        this.sort(); // stable
         if (original.length !== this.contents.length) return true;
         for (let i = 0; i < original.length; i++) {
-            if (original[i] !== this.contents[i]) return true;
+            if (!this.equalFn(original[i], this.contents[i])) return true;
         }
         return false;
     }
