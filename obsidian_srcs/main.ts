@@ -1,6 +1,5 @@
 import { App, Plugin, TFile, MarkdownView, EditorSuggest, EditorSuggestTriggerInfo, EditorSuggestContext, EditorPosition, Editor } from 'obsidian';
 import { PrefixTree, Node, Content } from '../srcs/trie'
-import { cursorTo } from 'readline';
 // import { TFileContent } from './obsidian_trie'
 
 const TEST_KEYWORDS_DIRECTORY = 'TEST_KEYWORDS/KEYWORDS';
@@ -95,7 +94,16 @@ export class LinkSuggest extends EditorSuggest<Content<TFile>> {
     }
 
     renderSuggestion(value: Content<TFile>, el: HTMLElement): void {
-        const outer = el.createDiv().setText(value.read(false).name);
+        if (!this.context) return;
+        const keywords = value.getKeywords(this.context.query);
+        console.log(keywords);
+
+        if (keywords.length === 0) return;
+        const outer = el.createDiv();
+        for (const keyword of keywords) {
+            // console.log(`${value.read(false).name} --- ${keyword}`);
+            outer.createDiv().setText(`${value.read(false).name} --- ${keyword}`);
+        }
     }
 
     selectSuggestion(value: Content<TFile>, evt: MouseEvent | KeyboardEvent): void {
