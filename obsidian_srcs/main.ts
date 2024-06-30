@@ -10,7 +10,7 @@ export default class KeywordSuggestPlugin extends Plugin {
     trie: PrefixTree<TFile> = new PrefixTree<TFile>();
 
     onload() {
-        this.registerEditorSuggest(new KeywordSuggest(this.app));
+        this.registerEditorSuggest(new LinkSuggest(this.app));
     }
 
     onunload() {
@@ -18,12 +18,13 @@ export default class KeywordSuggestPlugin extends Plugin {
     }
 }
 
-export class KeywordSuggest extends EditorSuggest<Content<TFile>> {
+export class LinkSuggest extends EditorSuggest<Content<TFile>> {
     trie: PrefixTree<TFile> = new PrefixTree<TFile>();
 
     constructor(app: App) {
         super(app);
         this.loadFiles();
+        this.limit = 8; // TODO: ask someone with UI/UX knowledge
     }
 
     private loadFiles() {
@@ -100,6 +101,6 @@ export class KeywordSuggest extends EditorSuggest<Content<TFile>> {
     selectSuggestion(value: Content<TFile>, evt: MouseEvent | KeyboardEvent): void {
         if (!this.context) return;
         const { start, end } = this.context;
-        this.context?.editor.replaceRange(`[[${value.read().path}]]`, start, end);
+        this.context?.editor.replaceRange(`[[${value.read().name.split('.')[0]}]]`, start, end);
     }
 }
