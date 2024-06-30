@@ -31,7 +31,7 @@ export class PrefixTree<V> {
         for (let i = 1; i < lowStr.length; i++) {
             cursor = cursor.getChildOfKey(lowStr.charAt(i), true);
         }
-        if (content) cursor.addContent(content);
+        if (content) cursor.addContent(content, str);
     }
 
     private addRoot(key: string) {
@@ -65,7 +65,7 @@ export class Node<V> {
 
     // default valuse
     private children: CharMap<V> = new CharMap<V>();
-    private contents: Content<V>[] = [];
+    private contents: Set<Content<V>> = new Set();
     private suggestion: SortedArray<Content<V>> = new SortedArray<Content<V>>(Content.compare, Content.isSmallerThan);
 
     constructor(key: string, parent: Node<V> | null = null) {
@@ -85,7 +85,7 @@ export class Node<V> {
     }
 
     public addContent(content: Content<V>, keyword: string = '', updateSuggestion: boolean = true) {
-        this.contents.push(content);
+        this.contents.add(content);
         content.updateNode(this);
         content.addKeyword(keyword);
         if (updateSuggestion) this.updateSuggestionUptoRoot(content);
@@ -96,7 +96,7 @@ export class Node<V> {
     }
 
     public getContents(): Content<V>[] {
-        return this.contents;
+        return Array.from(this.contents);
     }
 
     public getSuggestion(): Content<V>[] {
@@ -184,15 +184,18 @@ export class Content<V> {
     }
     
     getKeywords(prefix: string): string[] {
-        return this.keywords.getAsArray().map(k => k.keyword).filter(k => k.startsWith(prefix));
+        const lowPrefix = prefix.toLowerCase();
+        return this.keywords.getAsArray().map(k => k.keyword).filter(k => k.startsWith(lowPrefix));
     }
 
     public addKeyword(keyword: string) {
-        this.keywords.add(new Keyword(keyword));
+        const lowKeyword = keyword.toLowerCase();
+        this.keywords.add(new Keyword(lowKeyword));
     }
 
     public updateKeywords(keyword: string) {
-        const element = this.keywords.getAsArray().filter(k => k.keyword === keyword)[0];
+        const lowKeyword = keyword.toLowerCase();
+        const element = this.keywords.getAsArray().filter(k => k.keyword === lowKeyword)[0];
         if (!element) return;
         element.udpateUsage();
         this.keywords.add(element);
