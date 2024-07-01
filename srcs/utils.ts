@@ -8,3 +8,7 @@ export function getCommonElements<T>(a: T[], b: T[]): T[] {
     }
     return Array.from(commons);
 }
+
+export function compareWithoutCase(a: string, b: string): boolean {
+    return a.toLowerCase() === b.toLowerCase();
+}
