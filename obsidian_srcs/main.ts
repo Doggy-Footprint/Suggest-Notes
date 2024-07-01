@@ -17,7 +17,12 @@ export default class KeywordSuggestPlugin extends Plugin {
     }
 }
 
-export class LinkSuggest extends EditorSuggest<Content<TFile>> {
+interface TFileContent {
+    content: Content<TFile>,
+    keyword: string
+}
+
+export class LinkSuggest extends EditorSuggest<TFileContent> {
     trie: PrefixTree<TFile> = new PrefixTree<TFile>();
 
     constructor(app: App) {
@@ -88,27 +93,29 @@ export class LinkSuggest extends EditorSuggest<Content<TFile>> {
         return { word: line.slice(start, cursor.ch), startIndex: start };
     }
 
-    getSuggestions(context: EditorSuggestContext): Content<TFile>[] | Promise<Content<TFile>[]> {
-        // dummy for wrong query
-        return this.trie.search(context.query)?.getSuggestion() ?? [];
+    getSuggestions(context: EditorSuggestContext): TFileContent[] | Promise<TFileContent[]> {
+        const contents = this.trie.search(context.query)?.getSuggestion();
+        if (!contents) return [];
+
+        const suggestions: TFileContent[] = [];
+
+        if (!this.context) return [];
+        contents.forEach(c => c.getKeywords(this.context!.query).forEach(k => {
+            suggestions.push({content: c, keyword: k});
+        }));
+
+        return suggestions;
     }
 
-    renderSuggestion(value: Content<TFile>, el: HTMLElement): void {
+    renderSuggestion(value: TFileContent, el: HTMLElement): void {
         if (!this.context) return;
-        const keywords = value.getKeywords(this.context.query);
-        console.log(keywords);
-
-        if (keywords.length === 0) return;
-        const outer = el.createDiv();
-        for (const keyword of keywords) {
-            // console.log(`${value.read(false).name} --- ${keyword}`);
-            outer.createDiv().setText(`${value.read(false).name} --- ${keyword}`);
-        }
+        el.createDiv().setText(`${value.content.read(false).name}\n${value.keyword}`);
     }
 
-    selectSuggestion(value: Content<TFile>, evt: MouseEvent | KeyboardEvent): void {
+    selectSuggestion(value: TFileContent, evt: MouseEvent | KeyboardEvent): void {
         if (!this.context) return;
         const { start, end } = this.context;
-        this.context?.editor.replaceRange(`[[${value.read().name.split('.')[0]}]]`, start, end);
+        value.content.updateKeywords(value.keyword);
+        this.context?.editor.replaceRange(`[[${value.content.read().name.split('.')[0]}|${value.keyword}]]`, start, end);
     }
 }
