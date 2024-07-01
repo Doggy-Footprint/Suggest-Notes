@@ -1,57 +1,59 @@
-class CharMap<V> extends Map<string, Node<V>> {
+class LowerCaseCharMap<V> extends Map<string, Node<V>> {
     get(key: string): Node<V> | undefined;
     get(key: string, makeOne: true): Node<V>;
     get(key: string, makeOne: false): Node<V> | undefined;
     get(key: string, makeOne: boolean): Node<V> | undefined;
     get(key: string, makeOne: boolean = false): Node<V> | undefined {
         if (key.length === 0 || key.length > 1) return;
-        let node = super.get(key);
+        const lowerCase = key.toLowerCase();
+        let node = super.get(lowerCase);
         if (!node && makeOne) {
-            node = new Node(key);
-            this.set(key, node);
+            node = new Node();
+            this.set(lowerCase, node);
         }
         return node;
+    }
+
+    set(key: string, node: Node<V>): this {
+        return super.set(key.toLowerCase(), node) as typeof this;
     }
 }
 
 export class PrefixTree<V> {
-    private roots: CharMap<V> = new CharMap();
+    private roots: LowerCaseCharMap<V> = new LowerCaseCharMap();
 
     add(str: string, content?: Content<V>) {
-        const lowStr = str.toLowerCase();
-        if (lowStr.length === 0) return;
-        if (lowStr.length === 1) {
-            this.addRoot(lowStr); 
+        if (str.length === 0) return;
+        if (str.length === 1) {
+            this.addRoot(str); 
             return;
         }
         if (str.startsWith(' ') || str.endsWith(' ')) return;
 
-        let cursor = this.roots.get(lowStr.charAt(0), true);
+        let cursor = this.roots.get(str.charAt(0), true);
 
-        for (let i = 1; i < lowStr.length; i++) {
-            cursor = cursor.getChildOfKey(lowStr.charAt(i), true);
+        for (let i = 1; i < str.length; i++) {
+            cursor = cursor.getChildOfKey(str.charAt(i), true);
         }
         if (content) cursor.addContent(content, str);
     }
 
     private addRoot(key: string) {
         if (key.length !== 1) return;
-        this.roots.set(key, new Node(key));
+        this.roots.set(key, new Node());
     }
 
-    // TODO: use only lower case
     search(str: string): Node<V> | undefined {
-        const lowStr = str.toLowerCase();
-        if (lowStr.length === 0) return;
-        if (lowStr.length === 1) return this.roots.get(lowStr);
+        if (str.length === 0) return;
+        if (str.length === 1) return this.roots.get(str);
         if (str.startsWith(' ') || str.endsWith(' ')) return;
 
-        let cursor = this.roots.get(lowStr.charAt(0));
+        let cursor = this.roots.get(str.charAt(0));
 
         if (!cursor) return cursor;
 
-        for (let i = 1; i < lowStr.length; i++) {
-            cursor = cursor.getChildOfKey(lowStr.charAt(i));
+        for (let i = 1; i < str.length; i++) {
+            cursor = cursor.getChildOfKey(str.charAt(i));
             if (!cursor) return cursor;
         }
 
@@ -60,16 +62,14 @@ export class PrefixTree<V> {
 }
 
 export class Node<V> {
-    private readonly key: string;
     private parent: Node<V> | null;
 
     // default valuse
-    private children: CharMap<V> = new CharMap<V>();
+    private children: LowerCaseCharMap<V> = new LowerCaseCharMap<V>();
     private contents: Set<Content<V>> = new Set();
     private suggestion: SortedArray<Content<V>> = new SortedArray<Content<V>>(Content.compare, Content.isSmallerThan);
 
-    constructor(key: string, parent: Node<V> | null = null) {
-        this.key = key;
+    constructor(parent: Node<V> | null = null) {
         this.parent = parent;
     }
 
@@ -185,17 +185,16 @@ export class Content<V> {
     
     getKeywords(prefix: string): string[] {
         const lowPrefix = prefix.toLowerCase();
-        return this.keywords.getAsArray().map(k => k.keyword).filter(k => k.startsWith(lowPrefix));
+        return this.keywords.getAsArray().map(k => k.keyword).filter(k => k.toLowerCase().startsWith(lowPrefix));
     }
 
     public addKeyword(keyword: string) {
-        const lowKeyword = keyword.toLowerCase();
-        this.keywords.add(new Keyword(lowKeyword));
+        this.keywords.add(new Keyword(keyword));
     }
 
     public updateKeywords(keyword: string) {
         const lowKeyword = keyword.toLowerCase();
-        const element = this.keywords.getAsArray().filter(k => k.keyword === lowKeyword)[0];
+        const element = this.keywords.getAsArray().find(k => k.keyword.toLowerCase() === lowKeyword);
         if (!element) return;
         element.udpateUsage();
         this.keywords.add(element);
