@@ -331,8 +331,8 @@ describe('A Content object in muliple Node objects', () => {
         // chicken
         const chicken = trie.search('a')?.getSuggestion()[0]!;
         expect(chicken).toBeDefined();
-        expect(haveSameElements(chicken.getKeywords('ab'), ['abdi', 'abe'])).toBeTruthy();
-        expect(haveSameElements(chicken.getKeywords('ac'), ['acf', 'ach'])).toBeTruthy();
+        expect(haveSameElements(chicken.getKeywords('ab').map(k => k.keyword), ['abdi', 'abe'])).toBeTruthy();
+        expect(haveSameElements(chicken.getKeywords('ac').map(k => k.keyword), ['acf', 'ach'])).toBeTruthy();
         
         {
             chicken.updateKeywords('abdi');
@@ -341,7 +341,7 @@ describe('A Content object in muliple Node objects', () => {
         }
 
         // abdi:2, abe: 1
-        expect(chicken.getKeywords('ab')).toEqual(['abdi', 'abe']);
+        expect(chicken.getKeywords('ab').map(k => k.keyword)).toEqual(['abdi', 'abe']);
 
         {
             chicken.updateKeywords('abe');
@@ -349,13 +349,13 @@ describe('A Content object in muliple Node objects', () => {
         }
 
         // abe: 3, abdi: 2
-        expect(chicken.getKeywords('ab')).toEqual(['abe', 'abdi']);
+        expect(chicken.getKeywords('ab').map(k => k.keyword)).toEqual(['abe', 'abdi']);
 
         // watch
         const watch = trie.search('a')?.getSuggestion()[1]!;
         expect(watch).toBeDefined();
-        expect(haveSameElements(watch.getKeywords('ab'), ['ab'])).toBeTruthy();
-        expect(haveSameElements(watch.getKeywords('ac'), ['acg'])).toBeTruthy();
+        expect(haveSameElements(watch.getKeywords('ab').map(k => k.keyword), ['ab'])).toBeTruthy();
+        expect(haveSameElements(watch.getKeywords('ac').map(k => k.keyword), ['acg'])).toBeTruthy();
 
         {
             watch.updateKeywords('ab');
@@ -364,7 +364,7 @@ describe('A Content object in muliple Node objects', () => {
         }
         
         // ab: 2, acg: 1
-        expect(watch.getKeywords('a')).toEqual(['ab', 'acg']);
+        expect(watch.getKeywords('a').map(k => k.keyword)).toEqual(['ab', 'acg']);
 
         {
             watch.updateKeywords('acg'); 
@@ -372,13 +372,13 @@ describe('A Content object in muliple Node objects', () => {
         }
 
         // acg: 3, ab: 2
-        expect(watch.getKeywords('a')).toEqual(['acg', 'ab']);
+        expect(watch.getKeywords('a').map(k => k.keyword)).toEqual(['acg', 'ab']);
 
         // dog
         const dog = trie.search('a')?.getSuggestion()[2]!;
         expect(dog).toBeDefined();
-        expect(haveSameElements(dog.getKeywords('ab'), ['ab', 'abd', 'abe'])).toBeTruthy();
-        expect(haveSameElements(dog.getKeywords('ac'), ['acf'])).toBeTruthy();
+        expect(haveSameElements(dog.getKeywords('ab').map(k => k.keyword), ['ab', 'abd', 'abe'])).toBeTruthy();
+        expect(haveSameElements(dog.getKeywords('ac').map(k => k.keyword), ['acf'])).toBeTruthy();
 
         {
             dog.updateKeywords('abd');
@@ -390,7 +390,7 @@ describe('A Content object in muliple Node objects', () => {
         }
 
         // abd: 3, abe: 2, ab: 1
-        expect(dog.getKeywords('ab')).toEqual(['abd', 'abe', 'ab']);
+        expect(dog.getKeywords('ab').map(k => k.keyword)).toEqual(['abd', 'abe', 'ab']);
 
         {
             dog.updateKeywords('ab');
@@ -402,6 +402,6 @@ describe('A Content object in muliple Node objects', () => {
         }
 
         // ab: 5, abd: 4, abe: 3
-        expect(dog.getKeywords('ab')).toEqual(['ab', 'abd', 'abe']);
+        expect(dog.getKeywords('ab').map(k => k.keyword)).toEqual(['ab', 'abd', 'abe']);
     });
 });

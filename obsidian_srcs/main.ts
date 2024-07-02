@@ -1,5 +1,5 @@
 import { App, Plugin, TFile, MarkdownView, EditorSuggest, EditorSuggestTriggerInfo, EditorSuggestContext, EditorPosition, Editor } from 'obsidian';
-import { PrefixTree, Node, Content } from '../srcs/trie'
+import { PrefixTree, Node, Content, Keyword } from '../srcs/trie'
 // import { TFileContent } from './obsidian_trie'
 
 const TEST_KEYWORDS_DIRECTORY = 'TEST_KEYWORDS/KEYWORDS';
@@ -19,7 +19,7 @@ export default class KeywordSuggestPlugin extends Plugin {
 
 interface TFileContent {
     content: Content<TFile>,
-    keyword: string
+    keyword: Keyword
 }
 
 export class LinkSuggest extends EditorSuggest<TFileContent> {
@@ -104,18 +104,21 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
             suggestions.push({content: c, keyword: k});
         }));
 
+        // TODO: let new comer come first, not stable sorting.
+        suggestions.sort((a, b) => b.keyword.getScore() - a.keyword.getScore());
+
         return suggestions;
     }
 
     renderSuggestion(value: TFileContent, el: HTMLElement): void {
         if (!this.context) return;
-        el.createDiv().setText(`${value.content.read(false).name}\n${value.keyword}`);
+        el.createDiv().setText(`${value.content.read(false).name}\n${value.keyword.keyword}`);
     }
 
     selectSuggestion(value: TFileContent, evt: MouseEvent | KeyboardEvent): void {
         if (!this.context) return;
         const { start, end } = this.context;
-        value.content.updateKeywords(value.keyword);
-        this.context?.editor.replaceRange(`[[${value.content.read().name.split('.')[0]}|${value.keyword}]]`, start, end);
+        value.content.updateKeywords(value.keyword.keyword);
+        this.context?.editor.replaceRange(`[[${value.content.read().name.split('.')[0]}|${value.keyword.keyword} - ${value.keyword.getScore()}]]`, start, end);
     }
 }

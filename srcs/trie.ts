@@ -114,7 +114,7 @@ export class Node<V> {
     }
 }
 
-class Keyword {
+export class Keyword {
     keyword: string;
     private useCount: number;
 
@@ -183,9 +183,9 @@ export class Content<V> {
         // TODO
     }
     
-    getKeywords(prefix: string): string[] {
+    getKeywords(prefix: string): Keyword[] {
         const lowPrefix = prefix.toLowerCase();
-        return this.keywords.getAsArray().map(k => k.keyword).filter(k => k.toLowerCase().startsWith(lowPrefix));
+        return this.keywords.getAsArray().filter(k => k.keyword.toLowerCase().startsWith(lowPrefix));
     }
 
     public addKeyword(keyword: string) {
