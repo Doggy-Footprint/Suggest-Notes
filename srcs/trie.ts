@@ -87,7 +87,7 @@ export class Node<V> {
     public addContent(content: Content<V>, keyword: string = '', updateSuggestion: boolean = true) {
         this.contents.add(content);
         content.updateNode(this);
-        content.addKeyword(keyword);
+        if (keyword.length > 0) content.addKeyword(keyword);
         if (updateSuggestion) this.updateSuggestionUptoRoot(content);
     }
 

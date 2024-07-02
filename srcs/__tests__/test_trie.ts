@@ -165,7 +165,7 @@ describe('PrefixTree with user provided Content - add and delete operations with
         const e_Suggestion = trie.search('e')!.getSuggestion();
         
 
-        // TODO - how can I test with getter which changes object state?
+        // TODO - refactor this to use a auxiliary function
         expect(elev_Suggestion.length).toBe(2);
         expect(elev_Suggestion[0].read(false).getWord()).toBe('eleven');
         expect(elev_Suggestion[1].read(false).getWord()).toBe('elevator');
