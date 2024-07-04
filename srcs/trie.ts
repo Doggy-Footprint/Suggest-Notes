@@ -22,20 +22,20 @@ class LowerCaseCharMap<V> extends Map<string, Node<V>> {
 export class PrefixTree<V> {
     private roots: LowerCaseCharMap<V> = new LowerCaseCharMap();
 
-    add(str: string, content?: Content<V>) {
-        if (str.length === 0) return;
-        if (str.length === 1) {
-            this.addRoot(str); 
+    add(query: string, content?: Content<V>) {
+        if (query.length === 0) return;
+        if (query.length === 1) {
+            this.addRoot(query); 
             return;
         }
-        if (str.startsWith(' ') || str.endsWith(' ')) return;
+        if (query.startsWith(' ') || query.endsWith(' ')) return;
 
-        let cursor = this.roots.get(str.charAt(0), true);
+        let cursor = this.roots.get(query.charAt(0), true);
 
-        for (let i = 1; i < str.length; i++) {
-            cursor = cursor.getChildOfKey(str.charAt(i), true);
+        for (let i = 1; i < query.length; i++) {
+            cursor = cursor.getChildOfKey(query.charAt(i), true);
         }
-        if (content) cursor.addContent(content, str);
+        if (content) cursor.addContent(content, query);
     }
 
     private addRoot(key: string) {
@@ -43,17 +43,17 @@ export class PrefixTree<V> {
         this.roots.set(key, new Node());
     }
 
-    search(str: string): Node<V> | undefined {
-        if (str.length === 0) return;
-        if (str.length === 1) return this.roots.get(str);
-        if (str.startsWith(' ') || str.endsWith(' ')) return;
+    search(query: string): Node<V> | undefined {
+        if (query.length === 0) return;
+        if (query.length === 1) return this.roots.get(query);
+        if (query.startsWith(' ') || query.endsWith(' ')) return;
 
-        let cursor = this.roots.get(str.charAt(0));
+        let cursor = this.roots.get(query.charAt(0));
 
         if (!cursor) return cursor;
 
-        for (let i = 1; i < str.length; i++) {
-            cursor = cursor.getChildOfKey(str.charAt(i));
+        for (let i = 1; i < query.length; i++) {
+            cursor = cursor.getChildOfKey(query.charAt(i));
             if (!cursor) return cursor;
         }
 
