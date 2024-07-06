@@ -59,6 +59,10 @@ export class PrefixTree<V> {
 
         return cursor;
     }
+
+    delete(value: V, query: string) {
+
+    }
 }
 
 export class Node<V> {
@@ -91,10 +95,6 @@ export class Node<V> {
         if (updateSuggestion) this.updateSuggestionUptoRoot(content);
     }
 
-    public deletContent(content:Content<V>, updateSuggestion: boolean = true) {
-        // update Suggestion of this and parents upto the root
-    }
-
     public getContents(): Content<V>[] {
         return Array.from(this.contents);
     }
@@ -111,6 +111,46 @@ export class Node<V> {
             cursor.suggestion.add(content)
             cursor = cursor.parent;
         }
+    }
+
+    /**
+     * 
+     * @param keyword `keyword` must match to this node.
+     * @param value 
+     * @returns 
+     */
+    public deleteContent(value: V, keyword: string): boolean {
+        let content: Content<V> | undefined = undefined;
+
+        for (const c of this.contents) {
+            if (c.equal(value)) {
+                content = c;
+                break;
+            }
+        }
+        if (!content) return false;
+
+        /**
+         * TODO
+         * how to gurantee atomicity of
+         * delete Content in Node
+         * delete keyword, Node in Content
+         * update metadata of this and parents Nodes
+         */
+        content.deleteNode(this, keyword);
+        this.contents.delete(content);
+        this.updateSuggestionUptoRootAfterDeletion(content, keyword);
+        return true;
+    }
+
+    // TODO
+    public updateSuggestionUptoRootAfterDeletion(content: Content<V>, keyword: string) {
+        /**
+         * check keywords from content.
+         * if there is keyword of which node is a descendant of `this` node, no update
+         * else delete from current suggestion and call this method for parent.
+         */
+
     }
 }
 
@@ -179,8 +219,16 @@ export class Content<V> {
         this.node.add(node);
     }
 
-    public deleteNode(node: Node<V>) {
-        // TODO
+    public deleteNode(node: Node<V>, keyword: string): boolean {
+        const index = this.keywords
+                            .getAsArray()
+                            .findIndex(k => k.keyword === keyword);
+        if (index == -1) return false;
+        // TODO how to guarantee to delete node and keyword atomically?
+        // And more importantly, how to handle erroneous case? like one is deleted yet the other does not exist
+        this.node.delete(node);
+        this.keywords.delete(index);
+        return true;    
     }
     
     getKeywords(prefix: string): Keyword[] {
@@ -200,8 +248,8 @@ export class Content<V> {
         this.keywords.add(element);
     }
 
-    deleteKeywords() {
-        // TODO
+    equal(value: V) {
+        return this.value === value;
     }
 
     /**
@@ -253,8 +301,8 @@ class SortedArray<T> {
         return false;
     }
 
-    public delete(content: T) {
-        // TODO later
+    public delete(index: number) {
+        this.contents = [...this.contents.slice(0, index), ...this.contents.slice(index + 1)];
     }
 
     private sort() {
