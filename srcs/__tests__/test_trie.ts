@@ -1,5 +1,7 @@
 import { PrefixTree, Node, Content } from "../trie";
 
+// TODO use snake convention for variables for readability
+
 const generalTestSet: string[] = [
     'apple', 'apricot', 'apartment', 'apply', 'approach',
     'banana', 'band', 'banner', 'bank', 'barrel',
@@ -406,3 +408,126 @@ describe('A Content object in muliple Node objects', () => {
         expect(dog.getKeywords('ab').map(k => k.keyword)).toEqual(['ab', 'abd', 'abe']);
     });
 });
+
+describe('Delete & move Contents', () => {
+    class CustomClass {
+        value: string;
+
+        constructor(value: string) {
+            this.value = value;
+        }
+    }
+
+    let trie: PrefixTree<CustomClass>;
+    const trieLeaves = [
+        'abdi', 'abdjk', 'abdjl', 'abe', 'acf', 'acg', 'ach'
+    ];
+
+    interface TestCase {
+        keywords: string[],
+        initialReadCount: number,
+        obj: CustomClass
+    }
+
+    let testSet: Map<string, TestCase> = new Map();
+
+    testSet.set('chicken', {
+        keywords: ['abdi', 'abe', 'acf', 'ach'],
+        initialReadCount: 10,
+        obj: new CustomClass('chicken')
+    });
+    testSet.set('watch', {
+        keywords: ['ab', 'acg'],
+        initialReadCount: 5,
+        obj: new CustomClass('watch')
+    });
+    testSet.set('dog', {
+        keywords: ['ab', 'abd', 'abe', 'acf'],
+        initialReadCount: 1,
+        obj: new CustomClass('watch')
+    });
+    
+    /**
+    * a
+    * ├── b - ab - dog, watch
+    * │   ├── d - abd - dog
+    * │   │   ├── i - abdi - chicken
+    * │   │   └── j - abdj - abdj
+    * │   │       ├── k - abdjk - abdjk
+    * │   │       └── l - abdjl - abdjl
+    * │   └── e - abe - chicken, dog
+    * └── c - ac
+    *     ├── f - acf - chicken, dog
+    *     ├── g - acg - watch
+    *     └── h - ach - chicken
+    */
+    beforeEach(() => {
+        trie = new PrefixTree();
+        for (const leaf of trieLeaves) {
+            trie.add(leaf);
+        }
+        const iter = testSet.entries()
+        for(const testCase of iter) {
+            const content = new Content<CustomClass>(testCase[1].obj);
+            for (const keyword of testCase[1].keywords) {
+                const node = trie.search(keyword)!;
+                node.addContent(content, keyword, true);
+            }
+            for (let i = 0; i < testCase[1].initialReadCount; i++) {
+                content.read(true);
+            }
+        }
+    });
+
+    /**
+    * trie reference
+    * a
+    * ├── b - ab - dog, watch
+    * │   ├── d - abd - dog
+    * │   │   ├── i - abdi - chicken
+    * │   │   └── j - abdj - abdj
+    * │   │       ├── k - abdjk - abdjk
+    * │   │       └── l - abdjl - abdjl
+    * │   └── e - abe - chicken, dog
+    * └── c - ac
+    *     ├── f - acf - chicken, dog
+    *     ├── g - acg - watch
+    *     └── h - ach - chicken
+    */
+    test('delete Content 1: delete chicken from ach', () => {
+        const ac_Suggestion_before = trie.search('ac')!.getSuggestion();
+        trie.delete(testSet.get('chicken')!.obj, 'ach');
+        expect(trie.search('ach')!.getContents().length).toBe(0);
+        const ac_Suggestion_after = trie.search('ac')!.getSuggestion();
+        expect(checkSuggestionEquality(ac_Suggestion_before, ac_Suggestion_after)).toBeTruthy();
+        const a_Suggestion_after = trie.search('a')!.getSuggestion();
+        expect(checkSuggestionEquality(a_Suggestion_after, ac_Suggestion_after)).toBeTruthy();
+    });
+
+    test('delete Content 2: delete watch from acg', () => {
+        const ac_Suggestion_before = trie.search('ac')!.getSuggestion();
+        trie.delete(testSet.get('watch')!.obj, 'acg');
+        expect(trie.search('acg')!.getContents().length).toBe(0);
+        const ac_Suggestion_after = trie.search('ac')!.getSuggestion();
+        expect(checkSuggestionEquality(ac_Suggestion_before, ac_Suggestion_after)).not.toBeTruthy();
+        const acf_Suggestion = trie.search('acf')!.getSuggestion();
+        expect(checkSuggestionEquality(ac_Suggestion_after, acf_Suggestion)).toBeTruthy();
+    });
+
+    test('delete Content 3: delete chicken from abdi', () => {
+        // expect suggestion to be changed in abd and not in ab
+        
+        const abd_Suggestion_before = trie.search('abd')!.getSuggestion();
+        const ab_Suggestion_before = trie.search('ab')!.getSuggestion();
+        trie.delete(testSet.get('watch')!.obj, 'abdi');
+        const abd_Suggestion_after = trie.search('abd')!.getSuggestion();
+        const ab_Suggestion_after = trie.search('ab')!.getSuggestion();
+
+        expect(checkSuggestionEquality(abd_Suggestion_before, abd_Suggestion_after)).not.toBeTruthy();
+        expect(checkSuggestionEquality(ab_Suggestion_before, ab_Suggestion_after)).toBeTruthy();
+    });
+
+    test('move Content', () => {
+        // TODO
+    });
+})
