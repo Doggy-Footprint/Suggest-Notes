@@ -28,6 +28,25 @@ const generalTestSet: string[] = [
     'yak', 'yard', 'yarn', 'year', 'yellow',
 ]
 
+function checkSuggestionEquality<V>(a: Content<V>[], b: Content<V>[]): boolean {
+    if (a.length !== b.length) return false;
+
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+function checkSuggestion<V>(a: Content<V>[], values: V[]): boolean {
+    if (a.length !== values.length) return false;
+    
+    for (let i = 0; i < a.length; i++) {
+        if (a[i].read(false) !== values[i]) return false;
+    }
+
+    return true;
+}
+
 describe('PrefixTree basic operations', () => {
 
     const test_set_not_included: string[] = [
@@ -283,25 +302,7 @@ describe('A Content object in muliple Node objects', () => {
         const abe_Suggestion = trie.search('abe')!.getSuggestion();
         const ac_Suggestion = trie.search('ac')!.getSuggestion();
 
-        function checkSuggestionEquality(a: Content<string>[], b: Content<string>[]): boolean {
-            if (a.length !== b.length) return false;
-
-            for (let i = 0; i < a.length; i++) {
-                if (a[i] !== b[i]) return false;
-            }
-
-            return true;
-        }
-
-        function checkSuggestion(a: Content<string>[], strs: string[]): boolean {
-            if (a.length !== strs.length) return false;
-            
-            for (let i = 0; i < a.length; i++) {
-                if (a[i].read(false) !== strs[i]) return false;
-            }
-
-            return true;
-        }
+        
 
         // suggestion order: watch (25) -> chicken (10) -> dog (1)
         expect(checkSuggestion(a_Suggestion, ['watch', 'chicken', 'dog'])).toBeTruthy();
