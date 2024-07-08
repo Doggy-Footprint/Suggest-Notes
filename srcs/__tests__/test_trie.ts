@@ -444,7 +444,7 @@ describe('Delete & move Contents', () => {
     testSet.set('dog', {
         keywords: ['ab', 'abd', 'abe', 'acf'],
         initialReadCount: 1,
-        obj: new CustomClass('watch')
+        obj: new CustomClass('dog')
     });
     
     /**
@@ -519,13 +519,15 @@ describe('Delete & move Contents', () => {
         
         const abd_Suggestion_before = trie.search('abd')!.getSuggestion();
         const ab_Suggestion_before = trie.search('ab')!.getSuggestion();
-        trie.delete(testSet.get('watch')!.obj, 'abdi');
+        trie.delete(testSet.get('chicken')!.obj, 'abdi');
         const abd_Suggestion_after = trie.search('abd')!.getSuggestion();
         const ab_Suggestion_after = trie.search('ab')!.getSuggestion();
 
         expect(checkSuggestionEquality(abd_Suggestion_before, abd_Suggestion_after)).not.toBeTruthy();
         expect(checkSuggestionEquality(ab_Suggestion_before, ab_Suggestion_after)).toBeTruthy();
     });
+
+    // TODO: same deletion test with cases
 
     test('move Content', () => {
         // TODO
