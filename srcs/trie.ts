@@ -61,7 +61,8 @@ export class PrefixTree<V> {
     }
 
     delete(value: V, query: string) {
-
+        const node = this.search(query);
+        node?.deleteContent(value, query);
     }
 }
 
@@ -150,7 +151,17 @@ export class Node<V> {
          * if there is keyword of which node is a descendant of `this` node, no update
          * else delete from current suggestion and call this method for parent.
          */
-
+        let cursor: Node<V> | null = this;
+        let keywordCursor = keyword.toLowerCase();
+        const keywords: string[] = content.getAllKeywords().map(k => k.keyword.toLowerCase());
+        
+        while (cursor) {
+            if (keywords.some(k => k.toLowerCase().startsWith(keywordCursor))) return;
+            const deleted = cursor.suggestion.deleteElement(content);
+            if (!deleted) break;
+            keywordCursor = keywordCursor.slice(0, -1);
+            cursor = cursor.parent;
+        }
     }
 }
 
@@ -236,6 +247,10 @@ export class Content<V> {
         return this.keywords.getAsArray().filter(k => k.keyword.toLowerCase().startsWith(lowPrefix));
     }
 
+    getAllKeywords(): Keyword[] {
+        return this.keywords.getAsArray();
+    }
+
     public addKeyword(keyword: string) {
         this.keywords.add(new Keyword(keyword));
     }
@@ -299,6 +314,13 @@ class SortedArray<T> {
             if (!this.equalFn(original[i], this.contents[i])) return true;
         }
         return false;
+    }
+
+    public deleteElement(element: T): boolean {
+        const index = this.contents.findIndex(c => c === element);
+        if (index === -1) return false;
+        this.delete(index);
+        return true;
     }
 
     public delete(index: number) {
