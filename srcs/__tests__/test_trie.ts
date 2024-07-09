@@ -30,6 +30,18 @@ const generalTestSet: string[] = [
     'yak', 'yard', 'yarn', 'year', 'yellow',
 ]
 
+class TestingContent {
+    value: string;
+
+    constructor(word: string) {
+        this.value = word;
+    }
+
+    public getWord(): string {
+        return this.value;
+    }
+}
+
 function checkSuggestionEquality<V>(a: Content<V>[], b: Content<V>[]): boolean {
     if (a.length !== b.length) return false;
 
@@ -49,18 +61,17 @@ function checkSuggestion<V>(a: Content<V>[], values: V[]): boolean {
     return true;
 }
 
-describe('PrefixTree basic operations', () => {
-
+describe('PrefixTree basic operations - add, search', () => {
     const test_set_not_included: string[] = [
         'dapple', 'hatered', 'double monitor', 'july'
-    ]
+    ];
 
     let trie: PrefixTree<string>;
 
     beforeAll(() => {
         trie = new PrefixTree();
-        for (const word of generalTestSet) trie.add(word);
-    })
+        generalTestSet.forEach(c => trie.add(c));
+    });
 
     test('search exisitng nodes', () => {
         for (const word of generalTestSet) {
@@ -102,26 +113,12 @@ describe('PrefixTree basic operations', () => {
     });
 });
 
-describe('PrefixTree with user provided Content - add and delete operations with checks for suggestions', () => {
-    class Test_ContentObject {
-        word: string;
-
-        constructor(word: string) {
-            this.word = word;
-        }
-
-        public getWord(): string {
-            return this.word;
-        }
-    }
-
-    let trie: PrefixTree<Test_ContentObject>;
+describe('PrefixTree with Content - add and search operations', () => {
+    let trie: PrefixTree<TestingContent>;
 
     beforeEach(() => {
         trie = new PrefixTree();
-        for (const word of generalTestSet) {
-            trie.add(word, new Content<Test_ContentObject>(new Test_ContentObject(word)));
-        }
+        generalTestSet.forEach(c => trie.add(c, new Content<TestingContent>(new TestingContent(c))));
     })
 
     test('Search words', () => {
@@ -133,7 +130,18 @@ describe('PrefixTree with user provided Content - add and delete operations with
             expect(content[0].read().getWord()).toBe(word);
         }
     });
-    
+});
+
+describe('PrefixTree with Content', () => {
+    let trie: PrefixTree<TestingContent>;
+
+    beforeEach(() => {
+        trie = new PrefixTree();
+        generalTestSet
+            .filter(c => c.startsWith('e'))
+            .forEach(c => trie.add(c, new Content<TestingContent>(new TestingContent(c))));
+    })
+
     /**
      * e*
      * ├── l* 
@@ -153,7 +161,7 @@ describe('PrefixTree with user provided Content - add and delete operations with
         interface Test_Parameter {
             word: string;
             count: number;
-            node?: Node<Test_ContentObject>;
+            node?: Node<TestingContent>;
         }
 
         const testingParameters: Test_Parameter[] = [
@@ -216,8 +224,6 @@ describe('PrefixTree with user provided Content - add and delete operations with
         expect(e_Suggestion[5].read(false).getWord()).toBe('elevator');
         expect(e_Suggestion[6].read(false).getWord()).toBe('elephant');
     });
-
-    // TODO delete Content from Node
 });
 
 /**
@@ -234,28 +240,41 @@ describe('PrefixTree with user provided Content - add and delete operations with
  *     ├── g - acg
  *     └── h - ach
  */
+
+
 describe('A Content object in muliple Node objects', () => {
     let trie: PrefixTree<string>;
     const trieLeaves = [
         'abdi', 'abdjk', 'abdjl', 'abe', 'acf', 'acg', 'ach'
     ]
-    const testSet = [
-        { 
-            content: 'chicken', 
-            keywords: ['abdi', 'abe', 'acf', 'ach'],
-            readCount: 10
-        },
-        {
-            content: 'watch',
-            keywords: ['ab', 'acg'],
-            readCount: 5
-        },
-        {
-            content: 'dog', 
-            keywords: ['ab', 'abd', 'abe', 'acf'],
-            readCount: 1
-        }
-    ]
+
+    interface TestParameter {
+        content: string,
+        keywords: string[],
+        readCount: number,
+        contentObj: Content<string>
+    }
+    
+    const testSet: Map<string, TestParameter> = new Map();
+
+    testSet.set('chicken', {
+        content: 'chicken', 
+        keywords: ['abdi', 'abe', 'acf', 'ach'],
+        readCount: 10,
+        contentObj: new Content<string>('chicken')
+    });
+    testSet.set('watch', {
+        content: 'watch',
+        keywords: ['ab', 'acg'],
+        readCount: 5,
+        contentObj: new Content<string>('watch')
+    });
+    testSet.set('dog', {
+        content: 'dog', 
+        keywords: ['ab', 'abd', 'abe', 'acf'],
+        readCount: 1,
+        contentObj: new Content<string>('dog')
+    });
 
     /**
     * a
@@ -270,31 +289,24 @@ describe('A Content object in muliple Node objects', () => {
     *     ├── f - acf - chicken, dog
     *     ├── g - acg - watch
     *     └── h - ach - chicken
-    * 
     */
     beforeEach(() => {
         trie = new PrefixTree();
         for (const leaf of trieLeaves) {
             trie.add(leaf);
         }
-        for(const testCase of testSet) {
-            const content = new Content<string>(testCase.content);
+        for(const testCase of testSet.values()) {
             for (const keyword of testCase.keywords) {
                 const node = trie.search(keyword)!;
-                node.addContent(content, keyword, true);
+                node.addContent(testCase.contentObj, keyword, true);
             }
             for (let i = 0; i < testCase.readCount; i++) {
-                content.read(true);
+                testCase.contentObj.read(true);
             }
         }
     });
 
     test('Suggestion validity and consistency', () => {
-        const agcNode = trie.search('acg')!;
-        for (let i = 0; i < 20; i++) {
-            agcNode.getContents()[0].read();
-        }
-
         // variable names use '_' for readability
         const a_Suggestion = trie.search('a')!.getSuggestion();
         const ab_Suggestion = trie.search('ab')!.getSuggestion();
@@ -304,10 +316,8 @@ describe('A Content object in muliple Node objects', () => {
         const abe_Suggestion = trie.search('abe')!.getSuggestion();
         const ac_Suggestion = trie.search('ac')!.getSuggestion();
 
-        
-
-        // suggestion order: watch (25) -> chicken (10) -> dog (1)
-        expect(checkSuggestion(a_Suggestion, ['watch', 'chicken', 'dog'])).toBeTruthy();
+        // suggestion order: chicken (10) -> watch (5) -> dog (1)
+        expect(checkSuggestion(a_Suggestion, ['chicken', 'watch', 'dog'])).toBeTruthy();
 
         expect(checkSuggestionEquality(ab_Suggestion, a_Suggestion)).toBeTruthy();
 
@@ -319,7 +329,7 @@ describe('A Content object in muliple Node objects', () => {
 
         expect(checkSuggestion(abe_Suggestion, ['chicken', 'dog'])).toBeTruthy();
 
-        expect(checkSuggestion(ac_Suggestion, ['watch', 'chicken', 'dog'])).toBeTruthy();
+        expect(checkSuggestion(ac_Suggestion, ['chicken', 'watch', 'dog'])).toBeTruthy();
     });
 
     // TODO refactor or document
@@ -330,10 +340,9 @@ describe('A Content object in muliple Node objects', () => {
 
             return !diff;
         }
-
+        
         // chicken
-        const chicken = trie.search('a')?.getSuggestion()[0]!;
-        expect(chicken).toBeDefined();
+        const chicken = testSet.get('chicken')!.contentObj;
         expect(haveSameElements(chicken.getKeywords('ab').map(k => k.keyword), ['abdi', 'abe'])).toBeTruthy();
         expect(haveSameElements(chicken.getKeywords('ac').map(k => k.keyword), ['acf', 'ach'])).toBeTruthy();
         
@@ -355,8 +364,7 @@ describe('A Content object in muliple Node objects', () => {
         expect(chicken.getKeywords('ab').map(k => k.keyword)).toEqual(['abe', 'abdi']);
 
         // watch
-        const watch = trie.search('a')?.getSuggestion()[1]!;
-        expect(watch).toBeDefined();
+        const watch = testSet.get('watch')!.contentObj;
         expect(haveSameElements(watch.getKeywords('ab').map(k => k.keyword), ['ab'])).toBeTruthy();
         expect(haveSameElements(watch.getKeywords('ac').map(k => k.keyword), ['acg'])).toBeTruthy();
 
@@ -378,8 +386,7 @@ describe('A Content object in muliple Node objects', () => {
         expect(watch.getKeywords('a').map(k => k.keyword)).toEqual(['acg', 'ab']);
 
         // dog
-        const dog = trie.search('a')?.getSuggestion()[2]!;
-        expect(dog).toBeDefined();
+        const dog = testSet.get('dog')!.contentObj;
         expect(haveSameElements(dog.getKeywords('ab').map(k => k.keyword), ['ab', 'abd', 'abe'])).toBeTruthy();
         expect(haveSameElements(dog.getKeywords('ac').map(k => k.keyword), ['acf'])).toBeTruthy();
 
@@ -407,96 +414,10 @@ describe('A Content object in muliple Node objects', () => {
         // ab: 5, abd: 4, abe: 3
         expect(dog.getKeywords('ab').map(k => k.keyword)).toEqual(['ab', 'abd', 'abe']);
     });
-});
 
-describe('Delete & move Contents', () => {
-    class CustomClass {
-        value: string;
-
-        constructor(value: string) {
-            this.value = value;
-        }
-    }
-
-    let trie: PrefixTree<CustomClass>;
-    const trieLeaves = [
-        'abdi', 'abdjk', 'abdjl', 'abe', 'acf', 'acg', 'ach'
-    ];
-
-    interface TestCase {
-        keywords: string[],
-        initialReadCount: number,
-        obj: CustomClass
-    }
-
-    let testSet: Map<string, TestCase> = new Map();
-
-    testSet.set('chicken', {
-        keywords: ['abdi', 'abe', 'acf', 'ach'],
-        initialReadCount: 10,
-        obj: new CustomClass('chicken')
-    });
-    testSet.set('watch', {
-        keywords: ['ab', 'acg'],
-        initialReadCount: 5,
-        obj: new CustomClass('watch')
-    });
-    testSet.set('dog', {
-        keywords: ['ab', 'abd', 'abe', 'acf'],
-        initialReadCount: 1,
-        obj: new CustomClass('dog')
-    });
-    
-    /**
-    * a
-    * ├── b - ab - dog, watch
-    * │   ├── d - abd - dog
-    * │   │   ├── i - abdi - chicken
-    * │   │   └── j - abdj - abdj
-    * │   │       ├── k - abdjk - abdjk
-    * │   │       └── l - abdjl - abdjl
-    * │   └── e - abe - chicken, dog
-    * └── c - ac
-    *     ├── f - acf - chicken, dog
-    *     ├── g - acg - watch
-    *     └── h - ach - chicken
-    */
-    beforeEach(() => {
-        trie = new PrefixTree();
-        for (const leaf of trieLeaves) {
-            trie.add(leaf);
-        }
-        const iter = testSet.entries()
-        for(const testCase of iter) {
-            const content = new Content<CustomClass>(testCase[1].obj);
-            for (const keyword of testCase[1].keywords) {
-                const node = trie.search(keyword)!;
-                node.addContent(content, keyword, true);
-            }
-            for (let i = 0; i < testCase[1].initialReadCount; i++) {
-                content.read(true);
-            }
-        }
-    });
-
-    /**
-    * trie reference
-    * a
-    * ├── b - ab - dog, watch
-    * │   ├── d - abd - dog
-    * │   │   ├── i - abdi - chicken
-    * │   │   └── j - abdj - abdj
-    * │   │       ├── k - abdjk - abdjk
-    * │   │       └── l - abdjl - abdjl
-    * │   └── e - abe - chicken, dog
-    * └── c - ac
-    *     ├── f - acf - chicken, dog
-    *     ├── g - acg - watch
-    *     └── h - ach - chicken
-    */
     test('delete Content 1: delete chicken from ach', () => {
         const ac_Suggestion_before = trie.search('ac')!.getSuggestion();
-        trie.delete(testSet.get('chicken')!.obj, 'ach');
+        trie.delete(testSet.get('chicken')!.content, 'ach');
         expect(trie.search('ach')!.getContents().length).toBe(0);
         const ac_Suggestion_after = trie.search('ac')!.getSuggestion();
         expect(checkSuggestionEquality(ac_Suggestion_before, ac_Suggestion_after)).toBeTruthy();
@@ -506,7 +427,7 @@ describe('Delete & move Contents', () => {
 
     test('delete Content 2: delete watch from acg', () => {
         const ac_Suggestion_before = trie.search('ac')!.getSuggestion();
-        trie.delete(testSet.get('watch')!.obj, 'acg');
+        trie.delete(testSet.get('watch')!.content, 'acg');
         expect(trie.search('acg')!.getContents().length).toBe(0);
         const ac_Suggestion_after = trie.search('ac')!.getSuggestion();
         expect(checkSuggestionEquality(ac_Suggestion_before, ac_Suggestion_after)).not.toBeTruthy();
@@ -519,7 +440,7 @@ describe('Delete & move Contents', () => {
         
         const abd_Suggestion_before = trie.search('abd')!.getSuggestion();
         const ab_Suggestion_before = trie.search('ab')!.getSuggestion();
-        trie.delete(testSet.get('chicken')!.obj, 'abdi');
+        trie.delete(testSet.get('chicken')!.content, 'abdi');
         const abd_Suggestion_after = trie.search('abd')!.getSuggestion();
         const ab_Suggestion_after = trie.search('ab')!.getSuggestion();
 
