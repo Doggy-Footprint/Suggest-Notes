@@ -64,6 +64,14 @@ export class PrefixTree<V> {
         const node = this.search(query);
         node?.deleteContent(value, query);
     }
+
+    move(value: V, query: string, dest: string) {
+        // TODO: check query and dest and reflect it on update
+        const content = this.search(query)?.getContent(value);
+        if (!content) return;
+        this.delete(value, query);
+        this.add(dest, content);
+    }
 }
 
 export class Node<V> {
@@ -96,6 +104,15 @@ export class Node<V> {
         if (updateSuggestion) this.updateSuggestionUptoRoot(content);
     }
 
+    public getContent(value: V): Content<V> | undefined {
+        for (const c of this.contents) {
+            if (c.equal(value)) {
+                return c;
+            }
+        }
+        return;
+    }
+
     public getContents(): Content<V>[] {
         return Array.from(this.contents);
     }
@@ -121,14 +138,7 @@ export class Node<V> {
      * @returns 
      */
     public deleteContent(value: V, keyword: string): boolean {
-        let content: Content<V> | undefined = undefined;
-
-        for (const c of this.contents) {
-            if (c.equal(value)) {
-                content = c;
-                break;
-            }
-        }
+        let content: Content<V> | undefined = this.getContent(value);
         if (!content) return false;
 
         /**

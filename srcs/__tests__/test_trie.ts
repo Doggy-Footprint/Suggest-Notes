@@ -450,7 +450,33 @@ describe('A Content object in muliple Node objects', () => {
 
     // TODO: same deletion test with cases
 
-    test('move Content', () => {
-        // TODO
+    test('move Content 1: move chicken from ach to acg', () => {
+        trie.move(testSet.get('chicken')!.content, 'ach', 'acg');
+
+        expect(trie.search('ach')!.getSuggestion().length).toBe(0);
+        expect(trie.search('acg')!.getSuggestion().map(s => s.read(false))).toEqual(['chicken','watch'])
     });
-})
+
+    test('move Content 2: move chicken from ach to acf', () => {
+        const acf_Suggestion_before = trie.search('acf')!.getSuggestion();
+        trie.move(testSet.get('chicken')!.content, 'ach', 'acf');
+        expect(trie.search('ach')!.getSuggestion().length).toBe(0);
+
+        const acf_Suggestion_after = trie.search('acf')!.getSuggestion();
+        expect(checkSuggestionEquality(acf_Suggestion_before, acf_Suggestion_after)).toBeTruthy();
+    });
+
+    test('move Content 3: move dog from abd to abdjk', () => {
+        // check suggestion validity after move
+
+        const abd_Suggestion_before = trie.search('abd')!.getSuggestion();
+        trie.move(testSet.get('dog')!. content, 'abd', 'abdjk');
+
+        const abd_Suggestion_after = trie.search('abd')!.getSuggestion();
+        expect(checkSuggestionEquality(abd_Suggestion_before, abd_Suggestion_after)).toBeTruthy();
+        expect(trie.search('abdj')!.getSuggestion().map(c => c.read(false))).toEqual(['dog']);
+        expect(trie.search('abdjk')!.getSuggestion().map(c => c.read(false))).toEqual(['dog']);
+    });
+
+    // TODO: test more edge cases
+});
