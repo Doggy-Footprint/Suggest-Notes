@@ -5,16 +5,92 @@ import { PrefixTree, Node, Content, Keyword } from '../srcs/trie'
 const TEST_KEYWORDS_DIRECTORY = 'TEST_KEYWORDS/KEYWORDS';
 const TEST_KEYWORDS_TAGS = ['keyword', 'pkm', 'frequently-used'];
 
+function getFileName(file: TFile): string {
+    return file.name.split('.')[0];
+}
+
+function addFileinTrie(trie: PrefixTree<TFile>, file: TFile) {
+    if (!isFileIcluded(file)) return;
+
+    let content: Content<TFile> = new Content<TFile>(file);
+    // TODO: edge-caes: abc.def.md
+    this.trie.add(getFileName(file), content); 
+
+    const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
+
+    if (Array.isArray(aliases)) {
+        // TODO: implement bulk add
+        aliases.forEach(alias => trie.add(alias, content));
+    }
+}
+
+// TODO: use setting afterward
+function isFileIcluded(file: TFile): boolean {
+    if (file.path.startsWith(TEST_KEYWORDS_DIRECTORY)) 
+        return true;
+    else if (this.app.metadataCache.getFileCache(file)?.frontmatter?.tags?.some((t: string) => TEST_KEYWORDS_TAGS.includes(t)))
+        return true;
+    else 
+        return false;
+}
+
 export default class KeywordSuggestPlugin extends Plugin {
     trie: PrefixTree<TFile> = new PrefixTree<TFile>();
 
     onload() {
         this.registerEditorSuggest(new LinkSuggest(this.app));
+
+
+
+
+    }
+
+    private registerEventListeners() {
+        // create
+        this.app.workspace.onLayoutReady(() => {
+            this.registerEvent(this.app.vault.on('create', file => {
+                if (file instanceof TFile && isFileIcluded(file)) {
+                    addFileinTrie(this.trie, file);
+                }
+            }));
+        });
+
+        // modify
+        // TODO
+        // use Event queue, read from queue when suggest to user
+
+        //  delete
+        this.registerEvent(this.app.vault.on('delete', file => {
+            if (!(file instanceof TFile)) return;
+            const keywords: string[] = [];
+
+            keywords.push(getFileName(file));
+            const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
+
+            if (Array.isArray(aliases)) {
+                aliases.forEach(alias => keywords.push(alias));
+            }
+
+            // TODO: implement bulk deletion
+            keywords.forEach(keyword => this.trie.delete(file, keyword));
+        }));
+
+        // TODO
+        this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
+            if (!(file instanceof TFile)) return;
+
+            const oldPathArray = oldPath.split('/');
+            const name = oldPathArray[oldPathArray.length - 1];
+
+            this.trie.move(file, name.split('.')[0], getFileName(file));
+        }));
     }
 
     onunload() {
         
     }
+
+    
 }
 
 interface TFileContent {
@@ -34,21 +110,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
     private loadFiles() {
         const files = this.app.vault.getFiles();
         for (const file of files) {
-            let isKeywordNote: boolean = false;
-            if (file.path.startsWith(TEST_KEYWORDS_DIRECTORY)) {
-                isKeywordNote = true;
-            } else {
-                if (this.app.metadataCache.getFileCache(file)?.frontmatter?.tags?.some((t: string) => TEST_KEYWORDS_TAGS.includes(t)))
-                    isKeywordNote = true;
-            }
-            if (isKeywordNote) {
-                let content: Content<TFile> = new Content<TFile>(file);
-                this.trie.add(file.name.split('.')[0], content);
-                if (!Array.isArray(this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases)) continue;
-                for (const alias of this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases) {
-                    this.trie.add(alias, content);
-                }
-            }
+            addFileinTrie(this.trie, file);
         }
     }
 
