@@ -137,7 +137,7 @@ export class Node<V> {
      * @param value 
      * @returns 
      */
-    public deleteContent(value: V, keyword: string): boolean {
+    public deleteContent(value: V, keyword?: string): boolean {
         let content: Content<V> | undefined = this.getContent(value);
         if (!content) return false;
 
@@ -155,21 +155,23 @@ export class Node<V> {
     }
 
     // TODO
-    public updateSuggestionUptoRootAfterDeletion(content: Content<V>, keyword: string) {
+    public updateSuggestionUptoRootAfterDeletion(content: Content<V>, keyword?: string) {
         /**
          * check keywords from content.
          * if there is keyword of which node is a descendant of `this` node, no update
          * else delete from current suggestion and call this method for parent.
          */
         let cursor: Node<V> | null = this;
-        let keywordCursor = keyword.toLowerCase();
-        const keywords: string[] = content.getAllKeywords().map(k => k.keyword.toLowerCase());
+        let keywordCursor = keyword?.toLowerCase();
+        const keywords: string[] = keyword? content.getAllKeywords().map(k => k.keyword.toLowerCase()) : [];
         
         while (cursor) {
-            if (keywords.some(k => k.toLowerCase().startsWith(keywordCursor))) return;
+            if (keywordCursor !== undefined) {
+                if (keywords.some(k => k.toLowerCase().startsWith(keywordCursor!))) return;
+                keywordCursor = keywordCursor.slice(0, -1);
+            }
             const deleted = cursor.suggestion.deleteElement(content);
             if (!deleted) break;
-            keywordCursor = keywordCursor.slice(0, -1);
             cursor = cursor.parent;
         }
     }
@@ -220,7 +222,7 @@ export class Content<V> {
     }
 
     public cleanUp() {
-        
+        this.nodes.forEach(node => node.deleteContent(this.value));
     }
 
     /**
@@ -244,16 +246,17 @@ export class Content<V> {
         this.nodes.add(node);
     }
 
-    public deleteNode(node: Node<V>, keyword: string): boolean {
-        const index = this.keywords
+    public deleteNode(node: Node<V>, keyword?: string): boolean {
+        if (keyword !== undefined) {
+            const index = this.keywords
                             .getAsArray()
                             .findIndex(k => k.keyword === keyword);
-        if (index == -1) return false;
+            if (index == -1) return false;
+            this.keywords.delete(index);
+        }
+        return this.nodes.delete(node);
         // TODO how to guarantee to delete node and keyword atomically?
         // And more importantly, how to handle erroneous case? like one is deleted yet the other does not exist
-        this.nodes.delete(node);
-        this.keywords.delete(index);
-        return true;    
     }
     
     getKeywords(prefix: string): Keyword[] {
