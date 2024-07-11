@@ -40,7 +40,7 @@ export default class KeywordSuggestPlugin extends Plugin {
     onload() {
         this.registerEditorSuggest(new LinkSuggest(this.app));
 
-
+        this.registerEventListeners();
 
 
     }
@@ -58,21 +58,16 @@ export default class KeywordSuggestPlugin extends Plugin {
         // modify
         // TODO
         // use Event queue, read from queue when suggest to user
+        this.registerEvent(this.app.vault.on('modify', file => {
+
+        }));
 
         //  delete
         this.registerEvent(this.app.vault.on('delete', file => {
             if (!(file instanceof TFile)) return;
-            const keywords: string[] = [];
 
-            keywords.push(getFileName(file));
-            const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
-
-            if (Array.isArray(aliases)) {
-                aliases.forEach(alias => keywords.push(alias));
-            }
-
-            // TODO: implement bulk deletion
-            keywords.forEach(keyword => this.trie.delete(file, keyword));
+            const node = this.trie.search(getFileName(file));
+            const content = node?.getContent(file)?.cleanUp();
         }));
 
         // TODO
