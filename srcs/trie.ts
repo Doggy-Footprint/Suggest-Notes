@@ -219,6 +219,10 @@ export class Content<V> {
         this.useCount = 0;
     }
 
+    public cleanUp() {
+        
+    }
+
     /**
      * read value and update metadata, which is used for scoring each content when suggesting
      * @param udpate added for testing TODO: How to test getter with state change?
