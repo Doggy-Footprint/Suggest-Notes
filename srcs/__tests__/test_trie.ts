@@ -347,17 +347,17 @@ describe('A Content object in muliple Node objects', () => {
         expect(haveSameElements(chicken.getKeywords('ac').map(k => k.keyword), ['acf', 'ach'])).toBeTruthy();
         
         {
-            chicken.updateKeywords('abdi');
-            chicken.updateKeywords('abdi');
-            chicken.updateKeywords('abe');
+            chicken.readWithKeyword('abdi');
+            chicken.readWithKeyword('abdi');
+            chicken.readWithKeyword('abe');
         }
 
         // abdi:2, abe: 1
         expect(chicken.getKeywords('ab').map(k => k.keyword)).toEqual(['abdi', 'abe']);
 
         {
-            chicken.updateKeywords('abe');
-            chicken.updateKeywords('abe');
+            chicken.readWithKeyword('abe');
+            chicken.readWithKeyword('abe');
         }
 
         // abe: 3, abdi: 2
@@ -369,17 +369,17 @@ describe('A Content object in muliple Node objects', () => {
         expect(haveSameElements(watch.getKeywords('ac').map(k => k.keyword), ['acg'])).toBeTruthy();
 
         {
-            watch.updateKeywords('ab');
-            watch.updateKeywords('ab');
-            watch.updateKeywords('acg');
+            watch.readWithKeyword('ab');
+            watch.readWithKeyword('ab');
+            watch.readWithKeyword('acg');
         }
         
         // ab: 2, acg: 1
         expect(watch.getKeywords('a').map(k => k.keyword)).toEqual(['ab', 'acg']);
 
         {
-            watch.updateKeywords('acg'); 
-            watch.updateKeywords('acg');
+            watch.readWithKeyword('acg'); 
+            watch.readWithKeyword('acg');
         }
 
         // acg: 3, ab: 2
@@ -391,24 +391,24 @@ describe('A Content object in muliple Node objects', () => {
         expect(haveSameElements(dog.getKeywords('ac').map(k => k.keyword), ['acf'])).toBeTruthy();
 
         {
-            dog.updateKeywords('abd');
-            dog.updateKeywords('abd');
-            dog.updateKeywords('abd');
-            dog.updateKeywords('abe');
-            dog.updateKeywords('abe');
-            dog.updateKeywords('ab');
+            dog.readWithKeyword('abd');
+            dog.readWithKeyword('abd');
+            dog.readWithKeyword('abd');
+            dog.readWithKeyword('abe');
+            dog.readWithKeyword('abe');
+            dog.readWithKeyword('ab');
         }
 
         // abd: 3, abe: 2, ab: 1
         expect(dog.getKeywords('ab').map(k => k.keyword)).toEqual(['abd', 'abe', 'ab']);
 
         {
-            dog.updateKeywords('ab');
-            dog.updateKeywords('ab');
-            dog.updateKeywords('ab');
-            dog.updateKeywords('ab');
-            dog.updateKeywords('abd');
-            dog.updateKeywords('abe');
+            dog.readWithKeyword('ab');
+            dog.readWithKeyword('ab');
+            dog.readWithKeyword('ab');
+            dog.readWithKeyword('ab');
+            dog.readWithKeyword('abd');
+            dog.readWithKeyword('abe');
         }
 
         // ab: 5, abd: 4, abe: 3
