@@ -97,7 +97,7 @@ export class Node<V> {
         return child;
     }
 
-    public addContent(content: Content<V>, keyword: string = '', updateSuggestion: boolean = true) {
+    public addContent(content: Content<V>, keyword: string, updateSuggestion: boolean = true) {
         this.contents.add(content);
         content.updateNode(this);
         if (keyword.length > 0) content.addKeyword(keyword);
