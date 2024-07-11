@@ -207,7 +207,7 @@ export class Keyword {
 
 export class Content<V> {
     private value: V;
-    private node: Set<Node<V>> = new Set();
+    private nodes: Set<Node<V>> = new Set();
     private useCount: number;
     private keywords: SortedArray<Keyword> 
         = new SortedArray(Keyword.compare, Keyword.isSmallerThan, Keyword.equal);
@@ -231,7 +231,7 @@ export class Content<V> {
     public read(udpate: boolean = true): V {
         if (udpate) {
             this.useCount++;
-            this.node.forEach(n => n.updateSuggestionUptoRoot(this));
+            this.nodes.forEach(n => n.updateSuggestionUptoRoot(this));
         }
         return this.value;
     }
@@ -241,7 +241,7 @@ export class Content<V> {
     }
 
     public updateNode(node: Node<V>) {
-        this.node.add(node);
+        this.nodes.add(node);
     }
 
     public deleteNode(node: Node<V>, keyword: string): boolean {
@@ -251,7 +251,7 @@ export class Content<V> {
         if (index == -1) return false;
         // TODO how to guarantee to delete node and keyword atomically?
         // And more importantly, how to handle erroneous case? like one is deleted yet the other does not exist
-        this.node.delete(node);
+        this.nodes.delete(node);
         this.keywords.delete(index);
         return true;    
     }
@@ -269,7 +269,7 @@ export class Content<V> {
         this.keywords.add(new Keyword(keyword));
     }
 
-    public updateKeywords(keyword: string) {
+    public readWithKeyword(keyword: string) {
         const lowKeyword = keyword.toLowerCase();
         const element = this.keywords.getAsArray().find(k => k.keyword.toLowerCase() === lowKeyword);
         if (!element) return;

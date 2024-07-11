@@ -175,7 +175,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
     selectSuggestion(value: TFileContent, evt: MouseEvent | KeyboardEvent): void {
         if (!this.context) return;
         const { start, end } = this.context;
-        value.content.updateKeywords(value.keyword.keyword);
+        value.content.readWithKeyword(value.keyword.keyword);
         this.context?.editor.replaceRange(`[[${value.content.read().name.split('.')[0]}|${value.keyword.keyword} - ${value.keyword.getScore()}]]`, start, end);
     }
 }
