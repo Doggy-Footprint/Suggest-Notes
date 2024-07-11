@@ -479,4 +479,13 @@ describe('A Content object in muliple Node objects', () => {
     });
 
     // TODO: test more edge cases
+
+    test('cleanUp Content', () => {
+        const dog = testSet.get('dog')!.contentObj;
+        dog.cleanUp();
+
+        for (const query of testSet.get('dog')!.keywords) {
+            expect(trie.search(query)!.getContents().some(c => c === dog)).toBeFalsy();
+        }
+    })
 });
