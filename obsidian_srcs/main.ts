@@ -64,8 +64,7 @@ class MessageQueue {
         this.tail = 0;
     }
 
-    // TODO check synchronization safety
-    public async enqueue(message: EventMessage) {
+    public enqueue(message: EventMessage) {
         if (this.head === this.tail && this.head !== 0) {
             this.resetQueue();
         }
@@ -81,8 +80,7 @@ class MessageQueue {
         this.messages[this.tail] = message;
     }
 
-    // TODO check synchronization safety
-    public async processSingleMessage() {
+    public processSingleMessage() {
         if (this.head === this.tail) return;
         
         const message = this.messages[this.head++];
