@@ -22,6 +22,12 @@ class LowerCaseCharMap<V> extends Map<string, Node<V>> {
 export class PrefixTree<V> {
     private roots: LowerCaseCharMap<V> = new LowerCaseCharMap();
 
+    /**
+     * 
+     * @param query case-insensitive query string
+     * @param content 
+     * @returns 
+     */
     add(query: string, content?: Content<V>) {
         if (query.length === 0) return;
         if (query.length === 1) {
@@ -43,6 +49,11 @@ export class PrefixTree<V> {
         this.roots.set(key, new Node());
     }
 
+    /**
+     * 
+     * @param query case-insensitive query string
+     * @returns 
+     */
     search(query: string): Node<V> | undefined {
         if (query.length === 0) return;
         if (query.length === 1) return this.roots.get(query);
@@ -60,16 +71,28 @@ export class PrefixTree<V> {
         return cursor;
     }
 
-    delete(value: V, query: string) {
-        const node = this.search(query);
-        node?.deleteContent(value, query);
+    /**
+     * 
+     * @param value 
+     * @param keyword case-sensitive keyword of Content object
+     */
+    delete(value: V, keyword: string) {
+        const node = this.search(keyword);
+        node?.deleteContent(value, keyword);
     }
 
-    move(value: V, query: string, dest: string) {
+    /**
+     * 
+     * @param value 
+     * @param keyword case-sensitive keyword of Content object
+     * @param dest case-sensitive keyword of Content object
+     * @returns 
+     */
+    move(value: V, keyword: string, dest: string) {
         // TODO: check query and dest and reflect it on update
-        const content = this.search(query)?.getContent(value);
+        const content = this.search(keyword)?.getContent(value);
         if (!content) return;
-        this.delete(value, query);
+        this.delete(value, keyword);
         this.add(dest, content);
     }
 }
@@ -133,7 +156,8 @@ export class Node<V> {
 
     /**
      * 
-     * @param keyword `keyword` must match to this node.
+     * @param keyword `keyword` must match to this node. 
+     * If keyword is not provided, it measn this content with `value` will be deleted entirely
      * @param value 
      * @returns 
      */
@@ -149,8 +173,13 @@ export class Node<V> {
          * update metadata of this and parents Nodes
          */
         content.deleteNode(this, keyword);
-        this.contents.delete(content);
-        this.updateSuggestionUptoRootAfterDeletion(content, keyword);
+        if (!keyword || !content.getAllKeywords().map(k => k.keyword.toLowerCase()).some(k => k === keyword.toLowerCase())) {
+            // node is case-ignoring and keywords in Content are not.
+            // Thus we need to check if there is no keyword remaining before delete and update.
+
+            this.contents.delete(content);
+            this.updateSuggestionUptoRootAfterDeletion(content, keyword);
+        }
         return true;
     }
 
@@ -165,6 +194,7 @@ export class Node<V> {
         let keywordCursor = keyword?.toLowerCase();
         const keywords: string[] = keyword? content.getAllKeywords().map(k => k.keyword.toLowerCase()) : [];
         
+        // TODO check logical validity
         while (cursor) {
             if (keywordCursor !== undefined) {
                 if (keywords.some(k => k.toLowerCase().startsWith(keywordCursor!))) return;
