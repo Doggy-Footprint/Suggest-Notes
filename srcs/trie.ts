@@ -302,24 +302,24 @@ export class Content<V> {
 /**
  * Class which keeps Content objects in descending order
  */
-class SortedArray<T> {
-    private contents: T[] = [];
-    private sortFn: (a: T, b: T) => number;
-    private isSmallerThanFn: (a: T, b: T) => boolean;
-    private equalFn: (a: T, b: T) => boolean;
+class SortedArray<E> {
+    private contents: E[] = [];
+    private sortFn: (a: E, b: E) => number;
+    private isSmallerThanFn: (a: E, b: E) => boolean;
+    private equalFn: (a: E, b: E) => boolean;
 
-    constructor(sortFn: (a: T, b: T) => number, isSmallerThanFn: (a: T, b: T) => boolean, eqaulFn?: (a: T, b: T) => boolean) {
+    constructor(sortFn: (a: E, b: E) => number, isSmallerThanFn: (a: E, b: E) => boolean, eqaulFn?: (a: E, b: E) => boolean) {
         this.sortFn = sortFn;
         this.isSmallerThanFn = isSmallerThanFn;
         this.equalFn = eqaulFn ?? ((a, b) => a === b);
     }
 
-    add(content: T): undefined;
-    add(content: T, getResult: true): boolean;
-    add(content: T, getResult: false): undefined;
-    add(content: T, getResult: boolean): boolean | undefined;
+    add(content: E): undefined;
+    add(content: E, getResult: true): boolean;
+    add(content: E, getResult: false): undefined;
+    add(content: E, getResult: boolean): boolean | undefined;
     // TODO: refactor after test
-    public add(content: T, getResult: boolean = false): boolean | undefined {
+    public add(content: E, getResult: boolean = false): boolean | undefined {
         const original = [...this.contents];
         const index = this.contents.findIndex((c => this.equalFn(c, content)));
         if (index === -1) {
@@ -333,7 +333,7 @@ class SortedArray<T> {
         return false;
     }
 
-    public deleteElement(element: T): boolean {
+    public deleteElement(element: E): boolean {
         const index = this.contents.findIndex(c => c === element);
         if (index === -1) return false;
         this.delete(index);
@@ -348,7 +348,7 @@ class SortedArray<T> {
         this.contents.sort(this.sortFn);
     }
 
-    getAsArray(): T[] {
+    getAsArray(): E[] {
         return this.contents;
     }
 }
