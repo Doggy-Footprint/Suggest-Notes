@@ -89,7 +89,6 @@ export class PrefixTree<V> {
      * @returns 
      */
     move(keyword: string, dest: string, value: V) {
-        // TODO: check query and dest and reflect it on update
         const content = this.search(keyword)?.getContent(value);
         if (!content) return;
         this.delete(keyword, value);
@@ -165,13 +164,6 @@ export class Node<V> {
         let content: Content<V> | undefined = this.getContent(value);
         if (!content) return false;
 
-        /**
-         * TODO
-         * how to gurantee atomicity of
-         * delete Content in Node
-         * delete keyword, Node in Content
-         * update metadata of this and parents Nodes
-         */
         content.deleteNode(this, keyword);
         if (!keyword || !content.getAllKeywords().map(k => k.keyword.toLowerCase()).some(k => k === keyword.toLowerCase())) {
             // node is case-ignoring and keywords in Content are not.
@@ -183,7 +175,12 @@ export class Node<V> {
         return true;
     }
 
-    // TODO
+    /**
+     * Propagate deletion of content in this node to its ancestors
+     * @param content content to delete from suggestions of this node and all parents
+     * @param keyword expect to be path to this node if provided.
+     * @returns 
+     */
     public updateSuggestionUptoRootAfterDeletion(content: Content<V>, keyword?: string) {
         /**
          * check keywords from content.
@@ -192,14 +189,16 @@ export class Node<V> {
          */
         let cursor: Node<V> | null = this;
         let keywordCursor = keyword?.toLowerCase();
-        const keywords: string[] = keyword? content.getAllKeywords().map(k => k.keyword.toLowerCase()) : [];
+        const keywords: string[] = keyword ? content.getAllKeywords().map(k => k.keyword.toLowerCase()) : [];
         
-        // TODO check logical validity
         while (cursor) {
-            if (keywordCursor !== undefined) {
-                if (keywords.some(k => k.toLowerCase().startsWith(keywordCursor!))) return;
+            if (keywordCursor !== undefined && keywordCursor.length > 0) {
+                // check if the content exists in one of descendant of this node. In that case, no update.
+                // NOTE: this assume that there is no such case where parent has a content as suggestion but its child doesn't
+                if (keywords.some(k => k.startsWith(keywordCursor!))) return;
                 keywordCursor = keywordCursor.slice(0, -1);
             }
+            // if there are no changes in cursor's suggestion, stop propagation
             const deleted = cursor.suggestion.deleteElement(content);
             if (!deleted) break;
             cursor = cursor.parent;
@@ -241,7 +240,7 @@ export class Content<V> {
     private value: V;
     private nodes: Set<Node<V>> = new Set();
     private useCount: number;
-    private keywords: SortedArray<Keyword> 
+    private keywords: SortedArray<Keyword>
         = new SortedArray(Keyword.compare, Keyword.checkInsertIndex, Keyword.equal);
     // consider serialization for metadata such as useCount, { keyword: string, count: number }, lastUse, etc.
     // TODO consider update and configuration migration.
@@ -257,7 +256,7 @@ export class Content<V> {
 
     /**
      * read value and update metadata, which is used for scoring each content when suggesting
-     * @param udpate added for testing TODO: How to test getter with state change?
+     * @param udpate if `update` is true, read() reflect, and update metadata when read
      * @returns 
      */
     public read(udpate: boolean = true): V {
@@ -285,8 +284,6 @@ export class Content<V> {
             this.keywords.delete(index);
         }
         return this.nodes.delete(node);
-        // TODO how to guarantee to delete node and keyword atomically?
-        // And more importantly, how to handle erroneous case? like one is deleted yet the other does not exist
     }
     
     getKeywords(prefix: string): Keyword[] {
@@ -332,7 +329,6 @@ export class Content<V> {
 /**
  * Class which keeps Content objects in descending order
  */
-// TODO would I change it to SortedSet?
 class SortedArray<E> {
     private contents: E[] = [];
     private sortFn: (a: E, b: E) => number;

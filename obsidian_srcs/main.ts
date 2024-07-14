@@ -5,28 +5,31 @@ import { PrefixTree, Node, Content, Keyword } from '../srcs/trie'
 const TEST_KEYWORDS_DIRECTORY = 'TEST_KEYWORDS/KEYWORDS';
 const TEST_KEYWORDS_TAGS = ['keyword', 'pkm', 'frequently-used'];
 
+/**
+ * 
+ * @param file TFile or string. For string, file needs to be either path or file name
+ * @returns 
+ */
 function getFileName(file: TFile | string): string {
-    if (file instanceof TFile)
-        return file.name.split('.')[0];
-    else if (typeof file === 'string') {
-        const pathArray = file.split('/');
-        const name = pathArray[pathArray.length - 1];
-        return name.split('.')[0];
-    }
-    return ''; // shouldn't be used
+    let name: string;
+    if (file instanceof TFile) name = file.name;
+    else name = file;
+
+    const pathArray = name.split('/');
+    if (pathArray.length > 1) name = pathArray[pathArray.length - 1];
+    
+    return name.substring(0, name.lastIndexOf('.'));
 }
 
 function addFileinTrie(trie: PrefixTree<TFile>, file: TFile) {
     if (!isFileIcluded(file)) return;
 
     let content: Content<TFile> = new Content<TFile>(file);
-    // TODO: edge-caes: abc.def.md
     trie.add(getFileName(file), content); 
 
     const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
 
     if (Array.isArray(aliases)) {
-        // TODO: implement bulk add
         aliases.forEach(alias => trie.add(alias, content));
     }
 }

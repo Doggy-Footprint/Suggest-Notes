@@ -482,7 +482,6 @@ describe('A Content object in muliple Node objects', () => {
     test('move Content 3: move dog from abd to abdjk - Suggestion validity after move', () => {
         // variable names use '_' for readability
 
-
         const ab_Suggestion_before = trie.search('ab')!.getSuggestion().slice();
         const abd_Suggestion_before = trie.search('abd')!.getSuggestion().slice();
         trie.move('abd', 'abdjk', testSet.get('dog')!. content);
