@@ -1,7 +1,7 @@
 {
 	"name": "keyword-suggesting-plugin",
-	"version": "1.0.1",
-	"description": "Constructing project",
+	"version": "1.0.2",
+	"description": "Proof of Concept",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
@@ -9,7 +9,7 @@
 		"build": "npm run sync-obsidian && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test": "jest"
 	},
-	"keywords": [],
+	"keywords": ["Obsidian Plugin", "Obsidian internal link"],
 	"author": "Doggy-Footprint",
 	"license": "MIT",
 	"devDependencies": {

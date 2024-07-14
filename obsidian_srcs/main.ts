@@ -62,6 +62,7 @@ class MessageQueue {
 
     constructor(app: App, trie: PrefixTree<TFile>) {
         this.app = app;
+        this.trie = trie;
         this.messages = [];
         this.head = 0;
         this.tail = 0;
@@ -79,34 +80,30 @@ class MessageQueue {
         }
         if (this.tail - this.head > MessageQueue.maximum_size)
             console.error('MessageQueue oversized');
-        this.tail++;
-        this.messages[this.tail] = message;
+        this.messages[this.tail++] = message;
     }
 
     public processSingleMessage() {
         if (this.head === this.tail) return;
         
         const message = this.messages[this.head++];
+        const name = getFileName(message.path);
 
         switch (message.changes) {
             case 'new': { // currently not used
                 // TODO: implement bulk add in PrefixTree and use it.
-                const name = getFileName(message.path);
                 const content = new Content<TFile>(message.file)
                 this.trie.add(name, content);
                 message.aliases.forEach(alias => this.trie.add(alias, content));
                 break;
             }
             case 'delete': { // currently not used
-                const name = getFileName(message.path);
                 const content = this.trie.search(name)?.getContent(message.file);
-                if (!content) break;
-                content.cleanUp();
+                if (content) content.cleanUp();
                 break;
             }
             case 'modify': {
                 // TODO: read aliases from file cache when processing 
-                const name = getFileName(message.path);
                 const content = this.trie.search(name)?.getContent(message.file);
                 const keywords = content?.getAllKeywords().map(k => k.keyword);
 
@@ -124,14 +121,21 @@ class MessageQueue {
                         continue;
                     } else if (keywords[i] > aliases[j]) {
                         // missing in keywords - new aliases
-                        this.trie.add(aliases[j], content);
-                        j++;
+                        this.trie.add(aliases[j++], content);
                     } else if (keywords[i] < aliases[j]) {
                         // missing in aliases - deleted aliases
-                        this.trie.delete(keywords[i], message.file);
-                        i++;
+                        this.trie.delete(keywords[i++], message.file);
                     }
                 }
+
+                while (j < aliases.length) {
+                    this.trie.add(aliases[j++], content);
+                }
+                
+                while (i < keywords.length) {
+                    this.trie.delete(keywords[i++], message.file);
+                }
+
                 break;
             }
             default: {
