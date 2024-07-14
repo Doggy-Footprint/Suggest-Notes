@@ -103,7 +103,7 @@ export class Node<V> {
     // default valuse
     private children: LowerCaseCharMap<V> = new LowerCaseCharMap<V>();
     private contents: Set<Content<V>> = new Set();
-    private suggestion: SortedArray<Content<V>> = new SortedArray<Content<V>>(Content.compare, Content.isSmallerThan);
+    private suggestion: SortedArray<Content<V>> = new SortedArray<Content<V>>(Content.compare, Content.checkInsertIndex);
 
     constructor(parent: Node<V> | null = null) {
         this.parent = parent;
@@ -228,7 +228,7 @@ export class Keyword {
         return b.getScore() - a.getScore();
     }
 
-    public static isSmallerThan(a: Keyword, b: Keyword): boolean {
+    public static checkInsertIndex(a: Keyword, b: Keyword): boolean {
         return a.getScore() < b.getScore();
     }
 
@@ -242,7 +242,7 @@ export class Content<V> {
     private nodes: Set<Node<V>> = new Set();
     private useCount: number;
     private keywords: SortedArray<Keyword> 
-        = new SortedArray(Keyword.compare, Keyword.isSmallerThan, Keyword.equal);
+        = new SortedArray(Keyword.compare, Keyword.checkInsertIndex, Keyword.equal);
     // consider serialization for metadata such as useCount, { keyword: string, count: number }, lastUse, etc.
     // TODO consider update and configuration migration.
 
@@ -324,23 +324,24 @@ export class Content<V> {
         return b.getScore() - a.getScore();
     }
 
-    public static isSmallerThan<T>(a: Content<T>, b: Content<T>): boolean {
-        return a.getScore() < b.getScore();
+    public static checkInsertIndex<T>(a: Content<T>, b: Content<T>): boolean {
+        return a.getScore() <= b.getScore();
     }
 }
 
 /**
  * Class which keeps Content objects in descending order
  */
+// TODO would I change it to SortedSet?
 class SortedArray<E> {
     private contents: E[] = [];
     private sortFn: (a: E, b: E) => number;
-    private isSmallerThanFn: (a: E, b: E) => boolean;
+    private checkInsertIndexFn: (a: E, b: E) => boolean;
     private equalFn: (a: E, b: E) => boolean;
 
-    constructor(sortFn: (a: E, b: E) => number, isSmallerThanFn: (a: E, b: E) => boolean, eqaulFn?: (a: E, b: E) => boolean) {
+    constructor(sortFn: (a: E, b: E) => number, checkInsertIndexFn: (a: E, b: E) => boolean, eqaulFn?: (a: E, b: E) => boolean) {
         this.sortFn = sortFn;
-        this.isSmallerThanFn = isSmallerThanFn;
+        this.checkInsertIndexFn = checkInsertIndexFn;
         this.equalFn = eqaulFn ?? ((a, b) => a === b);
     }
 
@@ -348,19 +349,53 @@ class SortedArray<E> {
     add(content: E, getResult: true): boolean;
     add(content: E, getResult: false): undefined;
     add(content: E, getResult: boolean): boolean | undefined;
-    // TODO: refactor after test
+    /**
+     * 
+     * @param content 
+     * @param getResult 
+     * @returns if getResult is true, this method return true if the array is changed, and false otherwise.
+     */
     public add(content: E, getResult: boolean = false): boolean | undefined {
-        const original = [...this.contents];
-        const index = this.contents.findIndex((c => this.equalFn(c, content)));
-        if (index === -1) {
+        const index = this.contents.findIndex(c => this.equalFn(c, content));
+        const placeIndex = this.contents.findIndex(c => this.checkInsertIndexFn(c, content));
+
+        let result: boolean | undefined;
+
+        if (index === -1 && placeIndex === -1) {
+            // does not exist, should be placed in the last
+
+            // TODO: profile push and [...array.slice(0,index), content, ...last]. and if possible, integerate top 2 conditions
             this.contents.push(content);
+            result = true;
+        } else if (index === -1 && placeIndex !== -1/* for readability */) {
+            // does not exist, should be inserted in the middle
+            this.contents = [...this.contents.slice(0, placeIndex), content, ...this.contents.slice(placeIndex)];
+            result = true;
+        } else if (index !== -1/* for readability */ && placeIndex === -1) {
+            // re-arranging existing element at last
+
+            if (index === this.contents.length - 1) {
+                // in case the element is already the last element.
+                result = false; 
+            } else {
+                this.contents.splice(index, 1);
+                this.contents.push(content);
+                result = true;
+            }
+        } else if (index !== -1/* for readability */ && placeIndex !== -1) {
+            // re-arranging existing element in the middle
+
+            if (index === placeIndex) {
+                // in case the element is in right place already.
+                result = false;
+            } else {
+                this.contents.splice(index, 1);
+                this.contents.splice(placeIndex, 0, content);
+                result = true;
+            }
         }
-        this.sort(); // stable
-        if (original.length !== this.contents.length) return true;
-        for (let i = 0; i < original.length; i++) {
-            if (!this.equalFn(original[i], this.contents[i])) return true;
-        }
-        return false;
+
+        if (getResult) return result;
     }
 
     public deleteElement(element: E): boolean {
@@ -371,7 +406,8 @@ class SortedArray<E> {
     }
 
     public delete(index: number) {
-        this.contents = [...this.contents.slice(0, index), ...this.contents.slice(index + 1)];
+        if (index < 0 || index >= this.contents.length) return;
+        this.contents.splice(index, 1);
     }
 
     private sort() {
