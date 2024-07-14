@@ -76,7 +76,7 @@ export class PrefixTree<V> {
      * @param value 
      * @param keyword case-sensitive keyword of Content object
      */
-    delete(value: V, keyword: string) {
+    delete(keyword: string, value: V) {
         const node = this.search(keyword);
         node?.deleteContent(value, keyword);
     }
@@ -88,11 +88,11 @@ export class PrefixTree<V> {
      * @param dest case-sensitive keyword of Content object
      * @returns 
      */
-    move(value: V, keyword: string, dest: string) {
+    move(keyword: string, dest: string, value: V) {
         // TODO: check query and dest and reflect it on update
         const content = this.search(keyword)?.getContent(value);
         if (!content) return;
-        this.delete(value, keyword);
+        this.delete(keyword, value);
         this.add(dest, content);
     }
 }

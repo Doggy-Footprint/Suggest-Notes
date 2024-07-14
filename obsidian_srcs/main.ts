@@ -125,7 +125,7 @@ class MessageQueue {
                         j++;
                     } else if (keywords[i] < aliases[j]) {
                         // missing in aliases - deleted aliases
-                        this.trie.delete(message.file, keywords[i]);
+                        this.trie.delete(keywords[i], message.file);
                         i++;
                     }
                 }
@@ -214,7 +214,7 @@ export default class KeywordSuggestPlugin extends Plugin {
             const oldPathArray = oldPath.split('/');
             const name = oldPathArray[oldPathArray.length - 1];
 
-            this.trie.move(file, name.split('.')[0], getFileName(file));
+            this.trie.move(name.split('.')[0], getFileName(file), file);
         }));
     }
 

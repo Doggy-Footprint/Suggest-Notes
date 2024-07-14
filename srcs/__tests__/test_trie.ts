@@ -385,7 +385,7 @@ describe('A Content object in muliple Node objects', () => {
 
         const ac_Suggestion_before = trie.search('ac')!.getSuggestion();
 
-        trie.delete(testSet.get('chicken')!.content, 'ach');
+        trie.delete('ach', testSet.get('chicken')!.content);
         
         // no content in 'ach'
         expect(trie.search('ach')!.getContents().length).toBe(0);
@@ -402,7 +402,7 @@ describe('A Content object in muliple Node objects', () => {
 
         const ac_Suggestion_before = trie.search('ac')!.getSuggestion();
         
-        trie.delete(testSet.get('watch')!.content, 'acg');
+        trie.delete('acg', testSet.get('watch')!.content);
         
         // no content in 'acg'
         expect(trie.search('acg')!.getContents().length).toBe(0);
@@ -422,7 +422,7 @@ describe('A Content object in muliple Node objects', () => {
         const abd_Suggestion_before = trie.search('abd')!.getSuggestion();
         const ab_Suggestion_before = trie.search('ab')!.getSuggestion();
 
-        trie.delete(testSet.get('chicken')!.content, 'abdi');
+        trie.delete('abdi', testSet.get('chicken')!.content);
 
         // expect suggestion to be changed in abd and not in ab
         const abd_Suggestion_after = trie.search('abd')!.getSuggestion();
@@ -442,7 +442,7 @@ describe('A Content object in muliple Node objects', () => {
         const abd_Suggestion_before = trie.search('abd')!.getSuggestion();
         const ab_Suggestion_before = trie.search('ab')!.getSuggestion();
 
-        trie.delete(testSet.get('chicken')!.content, 'aBdI');
+        trie.delete('aBdI', testSet.get('chicken')!.content);
 
         // expect no changes in suggestion because 'aBdI' is deleted not previously existing 'abdi'
         const abdi_Suggestion_after = trie.search('abdi')!.getSuggestion();
@@ -454,15 +454,15 @@ describe('A Content object in muliple Node objects', () => {
     });
     
     test('move Content 1: move chicken from ach to acg', () => {
-        trie.move(testSet.get('chicken')!.content, 'ach', 'acg');
+        trie.move('ach', 'acg', testSet.get('chicken')!.content);
 
         expect(trie.search('ach')!.getSuggestion().length).toBe(0);
-        expect(trie.search('acg')!.getSuggestion().map(s => s.read(false))).toEqual(['chicken','watch'])
+        expect(trie.search('acg')!.getSuggestion().map(s => s.read(false))).toEqual(['chicken','watch']); // TODO refactor
     });
 
     test('move Content 2: move chicken from ach to acf', () => {
         const acf_Suggestion_before = trie.search('acf')!.getSuggestion();
-        trie.move(testSet.get('chicken')!.content, 'ach', 'acf');
+        trie.move('ach', 'acf', testSet.get('chicken')!.content);
         expect(trie.search('ach')!.getSuggestion().length).toBe(0);
 
         const acf_Suggestion_after = trie.search('acf')!.getSuggestion();
@@ -473,12 +473,12 @@ describe('A Content object in muliple Node objects', () => {
         // check suggestion validity after move
 
         const abd_Suggestion_before = trie.search('abd')!.getSuggestion();
-        trie.move(testSet.get('dog')!. content, 'abd', 'abdjk');
+        trie.move('abd', 'abdjk', testSet.get('dog')!. content);
 
         const abd_Suggestion_after = trie.search('abd')!.getSuggestion();
         expect(isSameArray(abd_Suggestion_before, abd_Suggestion_after)).toBeTruthy();
-        expect(trie.search('abdj')!.getSuggestion().map(c => c.read(false))).toEqual(['dog']);
-        expect(trie.search('abdjk')!.getSuggestion().map(c => c.read(false))).toEqual(['dog']);
+        expect(trie.search('abdj')!.getSuggestion().map(c => c.read(false))).toEqual(['dog']); // TODO refactor
+        expect(trie.search('abdjk')!.getSuggestion().map(c => c.read(false))).toEqual(['dog']); // TODO refactor
     });
 
     // TODO: test more edge cases
