@@ -1,48 +1,6 @@
 import { App, Plugin, TFile, MarkdownView, EditorSuggest, EditorSuggestTriggerInfo, EditorSuggestContext, EditorPosition, Editor, PluginManifest } from 'obsidian';
-import { PrefixTree, Node, Content, Keyword } from '../srcs/trie'
-// import { TFileContent } from './obsidian_trie'
-
-const TEST_KEYWORDS_DIRECTORY = 'TEST_KEYWORDS/KEYWORDS';
-const TEST_KEYWORDS_TAGS = ['keyword', 'pkm', 'frequently-used'];
-
-/**
- * 
- * @param file TFile or string. For string, file needs to be either path or file name
- * @returns 
- */
-function getFileName(file: TFile | string): string {
-    let name: string;
-    if (file instanceof TFile) name = file.name;
-    else name = file;
-
-    const pathArray = name.split('/');
-    if (pathArray.length > 1) name = pathArray[pathArray.length - 1];
-    
-    return name.substring(0, name.lastIndexOf('.'));
-}
-
-function addFileinTrie(trie: PrefixTree<TFile>, file: TFile) {
-    if (!isFileIcluded(file)) return;
-
-    let content: Content<TFile> = new Content<TFile>(file);
-    trie.add(getFileName(file), content); 
-
-    const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
-
-    if (Array.isArray(aliases)) {
-        aliases.forEach(alias => trie.add(alias, content));
-    }
-}
-
-// TODO: use setting afterward
-function isFileIcluded(file: TFile): boolean {
-    if (file.path.startsWith(TEST_KEYWORDS_DIRECTORY)) 
-        return true;
-    else if (this.app.metadataCache.getFileCache(file)?.frontmatter?.tags?.some((t: string) => TEST_KEYWORDS_TAGS.includes(t)))
-        return true;
-    else 
-        return false;
-}
+import { PrefixTree, Content, Keyword } from '../srcs/trie'
+import { DEFAULT_SETTINGS, KeywordSuggestPluginSettings, KeywordSuggestPluginSettingTab } from './settings'
 
 interface EventMessage {
     path: string,
@@ -53,6 +11,7 @@ interface EventMessage {
 
 class MessageQueue {
     app: App;
+    plugin: KeywordSuggestPlugin
     trie: PrefixTree<TFile>;
     messages: EventMessage[];
     head: number;
@@ -60,8 +19,9 @@ class MessageQueue {
     static readonly cutoff = 30;
     static readonly maximum_size = 1000;
 
-    constructor(app: App, trie: PrefixTree<TFile>) {
+    constructor(app: App, plugin: KeywordSuggestPlugin, trie: PrefixTree<TFile>) {
         this.app = app;
+        this.plugin = plugin
         this.trie = trie;
         this.messages = [];
         this.head = 0;
@@ -87,7 +47,7 @@ class MessageQueue {
         if (this.head === this.tail) return;
         
         const message = this.messages[this.head++];
-        const name = getFileName(message.path);
+        const name = this.plugin.getFileName(message.path);
 
         switch (message.changes) {
             case 'new': { // currently not used
@@ -110,6 +70,9 @@ class MessageQueue {
                 const aliases = this.app.metadataCache.getFileCache(message.file)?.frontmatter?.aliases;
 
                 if (!keywords || !aliases) break;
+
+                aliases.push(name);
+
                 keywords.sort();
                 aliases.sort();
 
@@ -135,7 +98,7 @@ class MessageQueue {
                 while (i < keywords.length) {
                     this.trie.delete(keywords[i++], message.file);
                 }
-
+                
                 break;
             }
             default: {
@@ -164,34 +127,43 @@ class MessageQueue {
 export default class KeywordSuggestPlugin extends Plugin {
     trie: PrefixTree<TFile>;
     messageQueue: MessageQueue;
+    settings: KeywordSuggestPluginSettings
 
     constructor(app: App, manifest: PluginManifest) {
         super(app, manifest);
         this.trie = new PrefixTree<TFile>();
-        this.messageQueue = new MessageQueue(this.app, this.trie);
+        this.messageQueue = new MessageQueue(this.app, this, this.trie);
     }
 
-    onload() {
+    async onload() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.addSettingTab(new KeywordSuggestPluginSettingTab(this.app, this));
+        
+        this.app.vault.getFiles().forEach(file => this.addFileinTrie(this.trie, file));
+
         this.registerEditorSuggest(new LinkSuggest(this.app, this.trie, this.messageQueue));
-
         this.registerEventListeners();
+    }
 
-
+    async saveSettings() {
+        await this.saveData(this.settings);
+        // TODO reflect changes on settings
+        // Postpone useCount to dev later
     }
 
     private registerEventListeners() {
         // create
         this.app.workspace.onLayoutReady(() => {
             this.registerEvent(this.app.vault.on('create', file => {
-                if (!(file instanceof TFile) || !isFileIcluded(file)) return;
+                if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
                 console.log('on create')
-                addFileinTrie(this.trie, file);
+                this.addFileinTrie(this.trie, file);
             }));
         });
 
         // modify
         this.registerEvent(this.app.vault.on('modify', file => {
-            if (!(file instanceof TFile) || !isFileIcluded(file)) return;
+            if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
             console.log('on modify');
             this.messageQueue.processSingleMessage();
             this.messageQueue.enqueue({
@@ -208,7 +180,7 @@ export default class KeywordSuggestPlugin extends Plugin {
 
             console.log('on delete');
 
-            const node = this.trie.search(getFileName(file));
+            const node = this.trie.search(this.getFileName(file));
             const content = node?.getContent(file)?.cleanUp();
         }));
 
@@ -221,15 +193,50 @@ export default class KeywordSuggestPlugin extends Plugin {
             const oldPathArray = oldPath.split('/');
             const name = oldPathArray[oldPathArray.length - 1];
 
-            this.trie.move(name.split('.')[0], getFileName(file), file);
+            this.trie.move(name.split('.')[0], this.getFileName(file), file);
         }));
     }
 
-    onunload() {
-        
+    async onunload() {
+        await this.saveSettings();
     }
 
+    /**
+     * 
+     * @param file TFile or string. For string, file needs to be either path or file name
+     * @returns 
+     */
+    getFileName(file: TFile | string): string {
+        let name: string;
+        if (file instanceof TFile) name = file.name;
+        else name = file;
     
+        const pathArray = name.split('/');
+        if (pathArray.length > 1) name = pathArray[pathArray.length - 1];
+        
+        return name.substring(0, name.lastIndexOf('.'));
+    }
+
+    addFileinTrie(trie: PrefixTree<TFile>, file: TFile) {
+        if (!this.isFileIcluded(file)) return;
+    
+        let content: Content<TFile> = new Content<TFile>(file);
+        trie.add(this.getFileName(file), content); 
+    
+        const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
+    
+        if (Array.isArray(aliases)) {
+            aliases.forEach(alias => trie.add(alias, content));
+        }
+    }
+
+    isFileIcluded(file: TFile): boolean {
+    if (this.settings.searchDirectories.some(dir => file.path.startsWith(dir)))
+        return true;
+    if (this.app.metadataCache.getFileCache(file)?.frontmatter?.tags?.some((t: string) => this.settings.checkTags.includes(t)))
+        return true;
+    return false;
+}
 }
 
 interface TFileContent {
@@ -245,15 +252,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
         super(app);
         this.trie = trie;
         this.messageQueue = messageQueue;
-        this.loadFiles();
         this.limit = 8; // TODO: ask someone with UI/UX knowledge
-    }
-
-    private loadFiles() {
-        const files = this.app.vault.getFiles();
-        for (const file of files) {
-            addFileinTrie(this.trie, file);
-        }
     }
 
     public onTrigger(cursor: EditorPosition, editor: Editor, file: TFile | null): EditorSuggestTriggerInfo | null {
