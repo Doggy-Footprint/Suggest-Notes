@@ -1,7 +1,5 @@
 import { PrefixTree, Node, Content } from "../trie";
 
-// TODO use snake convention for variables for readability
-
 const generalTestSet: string[] = [
     'apple', 'apricot', 'apartment', 'apply', 'approach',
     'banana', 'band', 'banner', 'bank', 'barrel',
