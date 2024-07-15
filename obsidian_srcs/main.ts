@@ -2,6 +2,8 @@ import { App, Plugin, TFile, MarkdownView, EditorSuggest, EditorSuggestTriggerIn
 import { PrefixTree, Content, Keyword } from '../srcs/trie'
 import { DEFAULT_SETTINGS, KeywordSuggestPluginSettings, KeywordSuggestPluginSettingTab } from './settings'
 
+const isDev = process.env.NODE_ENV === 'development';
+
 interface EventMessage {
     path: string,
     file: TFile,
@@ -44,6 +46,9 @@ class MessageQueue {
     }
 
     public processSingleMessage() {
+        if (isDev)
+            performance.mark('start - processSingleMessage');
+
         if (this.head === this.tail) return;
         
         const message = this.messages[this.head++];
@@ -51,7 +56,6 @@ class MessageQueue {
 
         switch (message.changes) {
             case 'new': { // currently not used
-                // TODO: implement bulk add in PrefixTree and use it.
                 const content = new Content<TFile>(message.file)
                 this.trie.add(name, content);
                 message.aliases.forEach(alias => this.trie.add(alias, content));
@@ -63,7 +67,6 @@ class MessageQueue {
                 break;
             }
             case 'modify': {
-                // TODO: read aliases from file cache when processing 
                 const content = this.trie.search(name)?.getContent(message.file);
                 const keywords = content?.getAllKeywords().map(k => k.keyword);
 
@@ -108,13 +111,33 @@ class MessageQueue {
 
         if (this.head === this.tail)
             this.resetQueue();
+
+        if (isDev) {
+            performance.mark('end - processSingleMessage');
+            performance.measure('processSingleMessage', 'start - processSingleMessage', 'end - processSingleMessage');
+
+            const measure = performance.getEntriesByName('processSingleMessage')[0];
+            console.log(`\t\tprocessSingleMessage took ${measure.duration} ms`);
+        }
     }
 
     public processAll() {
+        if (isDev) {
+            performance.mark('start - processAll');
+        }
+
         while (this.head !== this.tail) {
             this.processSingleMessage();
         }
         this.resetQueue();
+
+        if (isDev) {
+            performance.mark('end - processAll');
+            performance.measure('processAll', 'start - processAll', 'end - processAll');
+
+            const measure = performance.getEntriesByName('processAll')[0];
+            console.log(`\tprocessAll took ${measure.duration} ms`);
+        }
     }
 
     private resetQueue() {
@@ -139,6 +162,7 @@ export default class KeywordSuggestPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
         this.addSettingTab(new KeywordSuggestPluginSettingTab(this.app, this));
         
+        // TODO : after saving usage, load the saved usage to set each Content and Keyword object
         this.app.vault.getFiles().forEach(file => this.addFileinTrie(this.trie, file));
 
         this.registerEditorSuggest(new LinkSuggest(this.app, this.trie, this.messageQueue));
@@ -147,12 +171,11 @@ export default class KeywordSuggestPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
-        // TODO reflect changes on settings
+        // TODO reflect changes of settings on trie
         // Postpone useCount to dev later
     }
 
     private registerEventListeners() {
-        // create
         this.app.workspace.onLayoutReady(() => {
             this.registerEvent(this.app.vault.on('create', file => {
                 if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
@@ -161,7 +184,6 @@ export default class KeywordSuggestPlugin extends Plugin {
             }));
         });
 
-        // modify
         this.registerEvent(this.app.vault.on('modify', file => {
             if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
             console.log('on modify');
@@ -174,7 +196,6 @@ export default class KeywordSuggestPlugin extends Plugin {
             })
         }));
 
-        //  delete
         this.registerEvent(this.app.vault.on('delete', file => {
             if (!(file instanceof TFile)) return;
 
@@ -184,7 +205,6 @@ export default class KeywordSuggestPlugin extends Plugin {
             const content = node?.getContent(file)?.cleanUp();
         }));
 
-        // TODO
         this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
             if (!(file instanceof TFile)) return;
 
@@ -256,14 +276,28 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
     }
 
     public onTrigger(cursor: EditorPosition, editor: Editor, file: TFile | null): EditorSuggestTriggerInfo | null {
-        this.messageQueue.processAll(); // TODO check if is this right place to processAll
+        /**
+         * NOTE
+         * onTrigger is required to quickly reply. But as the this.messageQueue process messages on each modify, I assumed
+         * that the number of remaining messages would be relatively ignorably small.
+         */
+        this.messageQueue.processAll();
         if (cursor.ch == 0) return null;
 
         const { word, startIndex } = this.getWord(cursor, editor);
         if (word.length < 2) return null;
 
-        // TODO: can I refactor it to pass suggestions to this.getSuggestions?
+        if (isDev) {
+            performance.mark('start - getSuggestion in onTrigger');
+        }
         const suggestions = this.trie.search(word)?.getSuggestion();
+        if (isDev) {
+            performance.mark('end - getSuggestion in onTrigger');
+            performance.measure('getSuggestion in onTrigger', 'start - getSuggestion in onTrigger', 'end - getSuggestion in onTrigger');
+            const measure = performance.getEntriesByName('getSuggestion in onTrigger')[0];
+            console.log(`getSuggestion in onTrigger took ${measure.duration} ms`);
+        }
+
         if (!suggestions) return null;
 
         return {
@@ -308,7 +342,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
             suggestions.push({content: c, keyword: k});
         }));
 
-        // TODO: let new comer come first, not stable sorting.
+        // TODO: let new comer come first
         suggestions.sort((a, b) => b.keyword.getScore() - a.keyword.getScore());
 
         return suggestions;
@@ -323,9 +357,6 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
         if (!this.context) return;
         const { start, end } = this.context;
         value.content.readWithKeyword(value.keyword.keyword);
-        // score is for testing
-        this.context?.editor.replaceRange(`[[${value.content.read().name.split('.')[0]}|${value.keyword.keyword} - ${value.keyword.getScore()}]]`, start, end);
-
-        // Issue: if alias is the same with name of note or other aliases ignoring case, errorneous behavior happens
+        this.context?.editor.replaceRange(`[[${value.content.read().name.split('.')[0]}|${value.keyword.keyword}]]`, start, end);
     }
 }
