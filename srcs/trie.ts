@@ -299,9 +299,13 @@ export class Content<V> {
         this.keywords.add(new Keyword(keyword));
     }
 
+    /**
+     * 
+     * @param keyword case specific keyword required
+     * @returns 
+     */
     public readWithKeyword(keyword: string) {
-        const lowKeyword = keyword.toLowerCase();
-        const element = this.keywords.getAsArray().find(k => k.keyword.toLowerCase() === lowKeyword);
+        const element = this.keywords.getAsArray().find(k => k.keyword === keyword);
         if (!element) return;
         element.udpateUsage();
         this.keywords.add(element);
