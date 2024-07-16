@@ -7,7 +7,7 @@ const isDev = process.env.NODE_ENV === 'development';
 interface EventMessage {
     path: string,
     file: TFile,
-    aliases: string[],
+    aliases?: string[],
     changes: 'new' | 'delete' | 'modify'
 }
 
@@ -55,10 +55,14 @@ class MessageQueue {
         const name = this.plugin.getFileName(message.path);
 
         switch (message.changes) {
-            case 'new': { // currently not used
-                const content = new Content<TFile>(message.file)
+            case 'new': {
+                const content = new Content<TFile>(message.file);
                 this.trie.add(name, content);
-                message.aliases.forEach(alias => this.trie.add(alias, content));
+                
+                const aliases = this.app.metadataCache.getFileCache(message.file)?.frontmatter?.aliases;
+                if (!aliases) break;
+                
+                aliases.forEach((alias: string) => this.trie.add(alias, content));
                 break;
             }
             case 'delete': { // currently not used
@@ -117,7 +121,7 @@ class MessageQueue {
             performance.measure('processSingleMessage', 'start - processSingleMessage', 'end - processSingleMessage');
 
             const measure = performance.getEntriesByName('processSingleMessage')[0];
-            console.log(`\t\tprocessSingleMessage took ${measure.duration} ms`);
+            console.log(`\t\tprocessSingleMessage with ${message.changes} took ${measure.duration} ms`);
         }
     }
 
@@ -180,7 +184,13 @@ export default class KeywordSuggestPlugin extends Plugin {
             this.registerEvent(this.app.vault.on('create', file => {
                 if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
                 console.log('on create')
-                this.addFileinTrie(this.trie, file);
+
+                this.messageQueue.processSingleMessage();
+                this.messageQueue.enqueue({
+                    path: file.path,
+                    file: file,
+                    changes: 'new'
+                })
             }));
         });
 
@@ -191,13 +201,12 @@ export default class KeywordSuggestPlugin extends Plugin {
             this.messageQueue.enqueue({
                 path: file.path,
                 file: file,
-                aliases: [],
                 changes: 'modify'
             })
         }));
 
         this.registerEvent(this.app.vault.on('delete', file => {
-            if (!(file instanceof TFile)) return;
+            if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
 
             console.log('on delete');
 
@@ -206,7 +215,7 @@ export default class KeywordSuggestPlugin extends Plugin {
         }));
 
         this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
-            if (!(file instanceof TFile)) return;
+            if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
 
             console.log('on rename');
 
