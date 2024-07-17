@@ -39,7 +39,7 @@ export default class KeywordSuggestPlugin extends Plugin {
         
         this.registerEditorSuggest(new LinkSuggest(this.app, this.trie));
         // DEBUG: aliases not loaded without eventlisteners on plugin loading
-        // this.registerEventListeners();
+        this.registerEventListeners();
     }
 
     async saveSettings() {
