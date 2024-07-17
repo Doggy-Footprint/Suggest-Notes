@@ -151,13 +151,13 @@ export default class KeywordSuggestPlugin extends Plugin {
      */
     getFileName(file: TFile | string): string {
         let name: string;
-        if (file instanceof TFile) name = file.name;
-        else name = file;
-    
-        const pathArray = name.split('/');
-        if (pathArray.length > 1) name = pathArray[pathArray.length - 1];
-        
-        return name.substring(0, name.lastIndexOf('.'));
+        if (file instanceof TFile) name = file.basename;
+        else {
+            const pathArray = file.split('/');
+            name = pathArray[pathArray.length - 1];
+            name = name.substring(0, name.lastIndexOf('.'));
+        }
+        return name;
     }
 
     addFileinTrie(file: TFile) {
@@ -261,13 +261,13 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
 
     renderSuggestion(value: TFileContent, el: HTMLElement): void {
         if (!this.context) return;
-        el.createDiv().setText(`${value.content.read(false).name}\n${value.keyword.keyword}`);
+        el.createDiv().setText(`${value.content.read(false).basename}\n${value.keyword.keyword}`);
     }
 
     selectSuggestion(value: TFileContent, evt: MouseEvent | KeyboardEvent): void {
         if (!this.context) return;
         const { start, end } = this.context;
         value.content.readWithKeyword(value.keyword.keyword);
-        this.context?.editor.replaceRange(`[[${value.content.read().name.split('.')[0]}|${value.keyword.keyword}]]`, start, end);
+        this.context?.editor.replaceRange(`[[${value.content.read().path}|${value.keyword.keyword}]]`, start, end);
     }
 }
