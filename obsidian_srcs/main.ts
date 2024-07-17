@@ -73,6 +73,8 @@ export default class KeywordSuggestPlugin extends Plugin {
 
                 // no aliases remaining
                 if (!Array.isArray(aliases)) keywords.forEach(k => this.trie.delete(k, file));
+                
+                aliases.push(name);
 
                 measurePerformance<void>(() => {
                     keywords.sort();
@@ -133,7 +135,7 @@ export default class KeywordSuggestPlugin extends Plugin {
 
         this.registerEvent(this.app.metadataCache.on('deleted', (file, prevCache) => {
             if (!(file instanceof TFile) || this.trie.search(this.getFileName(file)) === undefined) return;
-            this.trie.delete(file.name, file);
+            this.trie.delete(this.getFileName(file), file);
             const aliases = prevCache?.frontmatter?.aliases;
             if (!aliases) return;
             aliases.forEach((alias: string) => this.trie.delete(alias, file));
