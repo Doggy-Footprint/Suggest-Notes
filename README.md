@@ -1,7 +1,4 @@
-# Goal of Plugin
+# Keyword Suggest
+This plugin aims to give users better experience in linking their notes while writing note. Obsidian requires to write `[[` to connect note to note, which is quite time-consuming and distracting when writing.
 
-This Plugin aims to give users better experience in linking thier notes while writing note.
-
-In Obsidian, we need to open `[[` double brackets to indicate internal linking. While it's reasonable to limit suggestion on `[[` to minimize unnecessary suggestions, It would be helpful to automatically detect keywords and notes with user defined condition, such as notes under certain directories.
-
-In inital design, this Plugin uses TRIE to support quick response. This TRIE object is loaded on plugin loading and updated based on **rename** or **modify**.
+This plugin allows users to define paths, and tags to be closely tracked so that users can get suggestions about tracked notes.
