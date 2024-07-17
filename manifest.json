@@ -1,9 +1,9 @@
 {
-	"id": "keyword-suggesting-plugin",
-	"name": "Keyword Suggesting Plugin",
+	"id": "suggest-notes",
+	"name": "Suggest Notes",
 	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
-	"description": "Proof of Concept",
+	"description": "QA",
 	"author": "Doggy-Footprint",
 	"isDesktopOnly": false
 }

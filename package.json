@@ -1,7 +1,7 @@
 {
-	"name": "keyword-suggesting-plugin",
+	"name": "suggest-notes",
 	"version": "1.0.2",
-	"description": "Proof of Concept",
+	"description": "QA",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
