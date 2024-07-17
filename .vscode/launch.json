@@ -25,7 +25,7 @@
             ],
             "sourceMaps": true,
             "env": {
-                "NODE_ENV": "test"
+                "NODE_ENV": "development"
             }
         }
     ]
