@@ -33,9 +33,11 @@ export default class KeywordSuggestPlugin extends Plugin {
         this.addSettingTab(new KeywordSuggestPluginSettingTab(this.app, this));
 
         // TODO : after saving usage, load the saved usage to set each Content and Keyword object
-        measurePerformance<void>(() => {
-            this.app.vault.getFiles().forEach(file => this.addFileinTrie(file));
-        }, 'INITIAL load');
+        this.app.workspace.onLayoutReady(() => {
+            measurePerformance<void>(() => {
+                this.app.vault.getFiles().forEach(file => this.addFileinTrie(file));
+            }, 'INITIAL load'); 
+        });
         
         this.registerEditorSuggest(new LinkSuggest(this.app, this.trie));
         // DEBUG: aliases not loaded without eventlisteners on plugin loading
