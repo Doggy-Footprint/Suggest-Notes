@@ -46,7 +46,8 @@ export class PrefixTree<V> {
 
     private addRoot(key: string) {
         if (key.length !== 1) return;
-        this.roots.set(key, new Node());
+        if (!this.roots.has(key))
+            this.roots.set(key, new Node()); 
     }
 
     /**

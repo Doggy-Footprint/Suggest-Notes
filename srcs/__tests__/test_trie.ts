@@ -95,6 +95,13 @@ describe('PrefixTree basic operations - add, search', () => {
         // root string - which does not exist
         expect(trie.search('z')).not.toBeDefined(); // no 'z-' starting element in test_set.
 
+        // single character
+        expect(trie.search('zoo')).not.toBeDefined();
+        trie.add('zoo');
+        expect(trie.search('zoo')).toBeDefined();
+        trie.add('z');
+        expect(trie.search('zoo')).toBeDefined();
+
         // an existing node + extra char
         expect(trie.search('yellow')).toBeDefined();
         expect(trie.search('yellows')).not.toBeDefined();
