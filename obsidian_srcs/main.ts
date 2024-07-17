@@ -15,6 +15,8 @@ function measurePerformance<T>(lines: () => T, label: string, desc?: string): T 
     performance.measure(label, `start - ${label}`, `end - ${label}`);
     const measure = performance.getEntriesByName(label)[0];
     console.log(`${label} ${desc ?? ''} took ${measure.duration} ms`);
+
+    return result;
 }
 
 export default class KeywordSuggestPlugin extends Plugin {
@@ -29,12 +31,15 @@ export default class KeywordSuggestPlugin extends Plugin {
     async onload() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
         this.addSettingTab(new KeywordSuggestPluginSettingTab(this.app, this));
-        
-        // TODO : after saving usage, load the saved usage to set each Content and Keyword object
-        this.app.vault.getFiles().forEach(file => this.addFileinTrie(this.trie, file));
 
+        // TODO : after saving usage, load the saved usage to set each Content and Keyword object
+        measurePerformance<void>(() => {
+            this.app.vault.getFiles().forEach(file => this.addFileinTrie(file));
+        }, 'INITIAL load');
+        
         this.registerEditorSuggest(new LinkSuggest(this.app, this.trie));
-        this.registerEventListeners();
+        // DEBUG: aliases not loaded without eventlisteners on plugin loading
+        // this.registerEventListeners();
     }
 
     async saveSettings() {
@@ -43,22 +48,95 @@ export default class KeywordSuggestPlugin extends Plugin {
         // Postpone useCount to dev later
     }
 
-    private registerEventListeners() {        
+    private registerEventListeners() {
+        /**
+         * TODO: check user scenarios
+         */
         this.registerEvent(this.app.metadataCache.on('changed', (file, _, cache) => {
-            if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
-            const aliases = cache.frontmatter?.aliases;
+            if (!(file instanceof TFile) 
+                || (!this.isFileIcluded(file, cache) && this.trie.search(this.getFileName(file)) === undefined)) return;
+            let aliases = cache.frontmatter?.aliases;
+            const name = this.getFileName(file);
 
-            // TODO: how to distinguish create and modify? maybe use MessageQueue and both vault.create, and metadataCache.changed
+            /**
+             * this relies on the fact that 'changed' event is not called for 'rename' event.
+             * see: https://github.com/obsidianmd/obsidian-api/issues/77
+             */
+            let content = this.trie.search(name)?.getContent(file);
+
+            if (!content) {
+                // new Content
+                this.addFileinTrie(file);
+            } else {
+                // update existing Content
+                const keywords = content.getAllKeywords().map(k => k.keyword);
+
+                // no aliases remaining
+                if (!Array.isArray(aliases)) keywords.forEach(k => this.trie.delete(k, file));
+
+                measurePerformance<void>(() => {
+                    keywords.sort();
+                    aliases.sort();
+ 
+                    let i = 0, j = 0;
+    
+                    while (i < keywords.length && j < aliases.length) {
+                        if (i < keywords.length && keywords[i] === aliases[j]) {
+                            j++;
+                            i++;
+                            continue;
+                        } else if (keywords[i] > aliases[j]) {
+                            // missing in keywords - new aliases
+                            this.trie.add(aliases[j++], content);
+                        } else if (keywords[i] < aliases[j]) {
+                            // missing in aliases - deleted aliases
+                            this.trie.delete(keywords[i++], file);
+                        }
+                    }
+    
+                    while (j < aliases.length) {
+                        // add remaining aliases
+                        this.trie.add(aliases[j++], content);
+                    }
+                    
+                    while (i < keywords.length) {
+                        // delete remaining unmatched aliases
+                        this.trie.delete(keywords[i++], file);
+                    }
+                }, 'changed event')
+            }
         }));
         
         this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
-            if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
-            this.trie.move(this.getFileName(oldPath), this.getFileName(file), file);
+            if (!(file instanceof TFile)) return;
+
+            const oldName = this.getFileName(oldPath);
+
+            let content = this.trie.search(oldName)?.getContent(file);
+            const isFileIcluded = this.isFileIcluded(file);
+
+            if (!content && isFileIcluded) {
+                this.addFileinTrie(file);
+            } else if (!content && !isFileIcluded) {
+                return;
+            }
+            else if (content && isFileIcluded) {
+                this.trie.move(oldName, this.getFileName(file), file);
+            } else if (content && !isFileIcluded) {
+                this.trie.delete(oldName, file);
+
+                const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
+                if (!aliases || !Array.isArray(aliases)) return;
+                aliases.forEach((alias: string) => this.trie.delete(alias, file));
+            }
         }));
 
         this.registerEvent(this.app.metadataCache.on('deleted', (file, prevCache) => {
-            if (!(file instanceof TFile) || !this.isFileIcluded(file)) return;
-            // TODO
+            if (!(file instanceof TFile) || this.trie.search(this.getFileName(file)) === undefined) return;
+            this.trie.delete(file.name, file);
+            const aliases = prevCache?.frontmatter?.aliases;
+            if (!aliases) return;
+            aliases.forEach((alias: string) => this.trie.delete(alias, file));
         }))
     }
 
@@ -82,16 +160,16 @@ export default class KeywordSuggestPlugin extends Plugin {
         return name.substring(0, name.lastIndexOf('.'));
     }
 
-    addFileinTrie(trie: PrefixTree<TFile>, file: TFile) {
+    addFileinTrie(file: TFile) {
         if (!this.isFileIcluded(file)) return;
     
         let content: Content<TFile> = new Content<TFile>(file);
-        trie.add(this.getFileName(file), content); 
-    
+        this.trie.add(this.getFileName(file), content); 
+
         const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
-    
+
         if (Array.isArray(aliases)) {
-            aliases.forEach(alias => trie.add(alias, content));
+            aliases.forEach(alias => this.trie.add(alias, content));
         }
     }
 
@@ -101,7 +179,7 @@ export default class KeywordSuggestPlugin extends Plugin {
         const result = measurePerformance<boolean>(() => {
             return this.settings.searchDirectories.some(dir => file.path.startsWith(dir))
             || cache?.frontmatter?.tags?.some((t: string) => this.settings.checkTags.includes(t));
-        }, 'isFileIcluded');
+        }, 'isFileIcluded'); 
 
         return result;
     }
