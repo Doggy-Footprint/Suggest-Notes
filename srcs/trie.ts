@@ -357,6 +357,7 @@ class SortedArray<E> {
      * @returns if getResult is true, this method return true if the array is changed, and false otherwise.
      */
     public add(content: E, getResult: boolean = false): boolean | undefined {
+        // TODO: use binary search instead of findIndex
         const index = this.contents.findIndex(c => this.equalFn(c, content));
         const placeIndex = this.contents.findIndex(c => this.checkInsertIndexFn(c, content));
 
