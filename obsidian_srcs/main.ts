@@ -38,9 +38,8 @@ export default class KeywordSuggestPlugin extends Plugin {
                 this.app.vault.getFiles().forEach(file => this.addFileinTrie(file));
             }, 'INITIAL load'); 
         });
-        
+
         this.registerEditorSuggest(new LinkSuggest(this.app, this.trie));
-        // DEBUG: aliases not loaded without eventlisteners on plugin loading
         this.registerEventListeners();
     }
 
@@ -180,12 +179,8 @@ export default class KeywordSuggestPlugin extends Plugin {
     isFileIcluded(file: TFile, cache: CachedMetadata | null = null): boolean {
         if (!cache) cache = this.app.metadataCache.getFileCache(file);
 
-        const result = measurePerformance<boolean>(() => {
-            return this.settings.searchDirectories.some(dir => file.path.startsWith(dir))
-            || cache?.frontmatter?.tags?.some((t: string) => this.settings.checkTags.includes(t));
-        }, 'isFileIcluded'); 
-
-        return result;
+        return this.settings.searchDirectories.some(dir => file.path.startsWith(dir))
+        || cache?.frontmatter?.tags?.some((t: string) => this.settings.checkTags.includes(t));
     }
 }
 
