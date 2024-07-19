@@ -16,7 +16,6 @@ export default class KeywordSuggestPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
         this.addSettingTab(new KeywordSuggestPluginSettingTab(this.app, this));
 
-        // TODO : after saving usage, load the saved usage to set each Content and Keyword object
         this.app.workspace.onLayoutReady(() => {
             measurePerformance<void>(() => {
                 this.app.vault.getFiles().forEach(file => this.addFileinTrie(file));
@@ -29,14 +28,9 @@ export default class KeywordSuggestPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
-        // TODO reflect changes of settings on trie
-        // Postpone useCount to dev later
     }
 
     private registerEventListeners() {
-        /**
-         * TODO: check user scenarios
-         */
         this.registerEvent(this.app.metadataCache.on('changed', (file, _, cache) => {
             if (!(file instanceof TFile) 
                 || (!this.isFileIcluded(file, cache) && this.trie.search(this.getFileName(file)) === undefined)) return;
@@ -207,7 +201,6 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
         };
     }
 
-    // TODO: test edge cases 
     private getWord(cursor: EditorPosition, editor: Editor): { word: string, startIndex: number} {
         // It seems ch = 0 is not provided in onTrigger.
 
@@ -236,7 +229,6 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
             suggestions.push({content: c, keyword: k});
         }));
 
-        // TODO: let new comer come first
         suggestions.sort((a, b) => b.keyword.getScore() - a.keyword.getScore());
 
         return suggestions;

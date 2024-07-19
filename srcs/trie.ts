@@ -245,8 +245,6 @@ export class Content<V> {
     private useCount: number;
     private keywords: SortedArray<Keyword>
         = new SortedArray(Keyword.compare, Keyword.checkInsertIndex, Keyword.equal);
-    // consider serialization for metadata such as useCount, { keyword: string, count: number }, lastUse, etc.
-    // TODO consider update and configuration migration.
 
     constructor(value: V) {
         this.value = value;
@@ -359,7 +357,6 @@ class SortedArray<E> {
      * @returns if getResult is true, this method return true if the array is changed, and false otherwise.
      */
     public add(content: E, getResult: boolean = false): boolean | undefined {
-        // TODO: use binary search instead of findIndex
         const index = this.contents.findIndex(c => this.equalFn(c, content));
         const placeIndex = this.contents.findIndex(c => this.checkInsertIndexFn(c, content));
 
@@ -368,7 +365,6 @@ class SortedArray<E> {
         if (index === -1 && placeIndex === -1) {
             // does not exist, should be placed in the last
 
-            // TODO: profile push and [...array.slice(0,index), content, ...last]. and if possible, integerate top 2 conditions
             this.contents.push(content);
             result = true;
         } else if (index === -1 && placeIndex !== -1/* for readability */) {
