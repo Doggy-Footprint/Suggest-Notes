@@ -1,3 +1,5 @@
+import { measureFinerLatency } from 'srcs/profiling';
+
 class LowerCaseCharMap<V> extends Map<string, Node<V>> {
     get(key: string): Node<V> | undefined;
     get(key: string, makeOne: true): Node<V>;
@@ -124,7 +126,9 @@ export class Node<V> {
         this.contents.add(content);
         content.updateNode(this);
         if (keyword.length > 0) content.addKeyword(keyword);
-        if (updateSuggestion) this.updateSuggestionUptoRoot(content);
+        measureFinerLatency(() => {
+            if (updateSuggestion) this.updateSuggestionUptoRoot(content);
+        }, `update Suggestions after add content with keyword : ${keyword}`);
     }
 
     public getContent(value: V): Content<V> | undefined {
@@ -171,7 +175,9 @@ export class Node<V> {
             // Thus we need to check if there is no keyword remaining before delete and update.
 
             this.contents.delete(content);
-            this.updateSuggestionUptoRootAfterDeletion(content, keyword);
+            measureFinerLatency(() => {
+                this.updateSuggestionUptoRootAfterDeletion(content, keyword);
+            }, `update after deletion with keyword: ${keyword}`);
         }
         return true;
     }
@@ -263,7 +269,9 @@ export class Content<V> {
     public read(udpate: boolean = true): V {
         if (udpate) {
             this.useCount++;
-            this.nodes.forEach(n => n.updateSuggestionUptoRoot(this));
+            measureFinerLatency(() => {
+                this.nodes.forEach(n => n.updateSuggestionUptoRoot(this));
+            }, `update after read`)
         }
         return this.value;
     }

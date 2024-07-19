@@ -1,23 +1,7 @@
 import { App, Plugin, TFile, MarkdownView, EditorSuggest, EditorSuggestTriggerInfo, EditorSuggestContext, EditorPosition, Editor, PluginManifest, CachedMetadata } from 'obsidian';
 import { PrefixTree, Content, Keyword } from '../srcs/trie'
 import { DEFAULT_SETTINGS, KeywordSuggestPluginSettings, KeywordSuggestPluginSettingTab } from './settings'
-
-const isDev = process.env.NODE_ENV === 'development';
-
-function measurePerformance<T>(lines: () => T, label: string, desc?: string): T {
-    if (!isDev) return lines();
-    
-    performance.mark(`start - ${label}`);
-
-    const result = lines();
-
-    performance.mark(`end - ${label}`);
-    performance.measure(label, `start - ${label}`, `end - ${label}`);
-    const measure = performance.getEntriesByName(label)[0];
-    console.log(`${label} ${desc ?? ''} took ${measure.duration} ms`);
-
-    return result;
-}
+import { measurePerformance, measureFinerLatency } from 'srcs/profiling';
 
 export default class KeywordSuggestPlugin extends Plugin {
     trie: PrefixTree<TFile>;
@@ -56,7 +40,8 @@ export default class KeywordSuggestPlugin extends Plugin {
         this.registerEvent(this.app.metadataCache.on('changed', (file, _, cache) => {
             if (!(file instanceof TFile) 
                 || (!this.isFileIcluded(file, cache) && this.trie.search(this.getFileName(file)) === undefined)) return;
-            let aliases = cache.frontmatter?.aliases;
+            let aliases: string[] = cache.frontmatter?.aliases ?? [];
+
             const name = this.getFileName(file);
 
             /**
@@ -72,19 +57,16 @@ export default class KeywordSuggestPlugin extends Plugin {
                 // update existing Content
                 const keywords = content.getAllKeywords().map(k => k.keyword);
 
-                // no aliases remaining
-                if (!Array.isArray(aliases)) keywords.forEach(k => this.trie.delete(k, file));
-                
                 aliases.push(name);
 
                 measurePerformance<void>(() => {
                     keywords.sort();
                     aliases.sort();
- 
+
                     let i = 0, j = 0;
     
                     while (i < keywords.length && j < aliases.length) {
-                        if (i < keywords.length && keywords[i] === aliases[j]) {
+                        if (keywords[i] === aliases[j]) {
                             j++;
                             i++;
                             continue;
@@ -204,7 +186,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
         const { word, startIndex } = this.getWord(cursor, editor);
         if (word.length < 2) return null;
 
-        const suggestions = measurePerformance<Content<TFile>[] | undefined>(() => {
+        const suggestions = measureFinerLatency<Content<TFile>[] | undefined>(() => {
             return this.trie.search(word)?.getSuggestion();
         }, 'getSuggestion', 'onTrigger')
 
