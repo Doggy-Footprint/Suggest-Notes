@@ -1,3 +1,7 @@
+# Front
+- [ ] make it pretty
+- [ ] decide whether to limit the number of suggestions or not
+
 # Feature
 - [ ] Save & restore Note/Keyword usage including latest use
     - [ ] profile again afterward
