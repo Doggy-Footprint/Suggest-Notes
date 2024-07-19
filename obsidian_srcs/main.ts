@@ -59,7 +59,7 @@ export default class KeywordSuggestPlugin extends Plugin {
 
                 aliases.push(name);
 
-                measurePerformance<void>(() => {
+                measureFinerLatency<void>(() => {
                     keywords.sort();
                     aliases.sort();
 
@@ -117,11 +117,13 @@ export default class KeywordSuggestPlugin extends Plugin {
         }));
 
         this.registerEvent(this.app.metadataCache.on('deleted', (file, prevCache) => {
-            if (!(file instanceof TFile) || this.trie.search(this.getFileName(file)) === undefined) return;
-            this.trie.delete(this.getFileName(file), file);
-            const aliases = prevCache?.frontmatter?.aliases;
-            if (!aliases) return;
-            aliases.forEach((alias: string) => this.trie.delete(alias, file));
+            measureFinerLatency(() => {
+                if (!(file instanceof TFile) || this.trie.search(this.getFileName(file)) === undefined) return;
+                this.trie.delete(this.getFileName(file), file);
+                const aliases = prevCache?.frontmatter?.aliases;
+                if (!aliases) return;
+                aliases.forEach((alias: string) => this.trie.delete(alias, file));
+            }, 'deleted event');
         }))
     }
 
