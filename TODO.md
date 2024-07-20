@@ -7,7 +7,8 @@
     - [ ] profile again afterward
 - [ ] update LinkSuggest.getSuggestions to sort with latest use
     - expect to be done by above TODO
-
+- [ ] Store abbreviation also for keywords including spaces
+    - eg. "Keyword Based Note Suggestion" can be searched with "kbns"
 # Optimization
 
 # Optimization for later demands
