@@ -17,6 +17,7 @@
 - [ ] Store abbreviation also for keywords including spaces
     - eg. "Keyword Based Note Suggestion" can be searched with "kbns"
 # Optimization
+- [ ] make SortedArray to use compare instead of checkInsertIndexFn
 
 # Optimization for later demands
 - [ ] limit Node.suggestions size so that propation can be suspended properly
