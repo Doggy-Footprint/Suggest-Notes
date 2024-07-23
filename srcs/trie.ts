@@ -105,7 +105,7 @@ export class Node<V> {
     // default valuse
     private children: LowerCaseCharMap<V> = new LowerCaseCharMap<V>();
     private contents: Set<Content<V>> = new Set();
-    private suggestion: SortedArray<Content<V>> = new SortedArray<Content<V>>(Content.compare, Content.checkInsertIndex);
+    private suggestion: SortedArray<Content<V>> = new SortedArray<Content<V>>(Content.compareDesc);
 
     constructor(parent: Node<V> | null = null) {
         this.parent = parent;
@@ -211,27 +211,19 @@ export class Node<V> {
 
 export class Keyword {
     keyword: string;
-    private useCount: number;
+    private statistic: Statistic = new Statistic();
 
-    constructor(keyword: string, useCount: number = 0) {
+    constructor(keyword: string, statistic?: Statistic) {
         this.keyword = keyword;
-        this.useCount = useCount;
+        if (statistic) this.statistic = statistic;
     }
 
     public udpateUsage() {
-        this.useCount++;
+        this.statistic.update();
     }
 
-    public getScore(): number {
-        return this.useCount;
-    }
-
-    public static compare(a: Keyword, b: Keyword): number {
-        return b.getScore() - a.getScore();
-    }
-
-    public static checkInsertIndex(a: Keyword, b: Keyword): boolean {
-        return a.getScore() < b.getScore();
+    public static compareDesc(a: Keyword, b: Keyword): number {
+        return Statistic.compareDesc(a.statistic, b.statistic);
     }
 
     public static equal(a: Keyword, b: Keyword): boolean {
@@ -241,14 +233,14 @@ export class Keyword {
 
 export class Content<V> {
     private value: V;
+    private statistic: Statistic = new Statistic();
     private nodes: Set<Node<V>> = new Set();
-    private useCount: number;
     private keywords: SortedArray<Keyword>
-        = new SortedArray(Keyword.compare, Keyword.checkInsertIndex, Keyword.equal);
+        = new SortedArray(Keyword.compareDesc, Keyword.equal);
 
-    constructor(value: V) {
+    constructor(value: V, statistic?: Statistic) {
         this.value = value;
-        this.useCount = 0;
+        if (statistic) this.statistic = statistic;
     }
 
     public cleanUp() {
@@ -262,14 +254,10 @@ export class Content<V> {
      */
     public read(udpate: boolean = true): V {
         if (udpate) {
-            this.useCount++;
+            this.statistic.update()
             this.nodes.forEach(n => n.updateSuggestionUptoRoot(this));
         }
         return this.value;
-    }
-
-    public getScore(): number {
-        return this.useCount;
     }
 
     public updateNode(node: Node<V>) {
@@ -322,12 +310,8 @@ export class Content<V> {
      * @param b 
      * @returns 
      */
-    public static compare<T>(a: Content<T>, b: Content<T>): number {
-        return b.getScore() - a.getScore();
-    }
-
-    public static checkInsertIndex<T>(a: Content<T>, b: Content<T>): boolean {
-        return a.getScore() <= b.getScore();
+    public static compareDesc<T>(a: Content<T>, b: Content<T>): number {
+        return Statistic.compareDesc(a.statistic, b.statistic);
     }
 }
 
@@ -336,13 +320,11 @@ export class Content<V> {
  */
 class SortedArray<E> {
     private contents: E[] = [];
-    private sortFn: (a: E, b: E) => number;
-    private checkInsertIndexFn: (a: E, b: E) => boolean;
+    private compareFn: (a: E, b: E) => number;
     private equalFn: (a: E, b: E) => boolean;
 
-    constructor(sortFn: (a: E, b: E) => number, checkInsertIndexFn: (a: E, b: E) => boolean, eqaulFn?: (a: E, b: E) => boolean) {
-        this.sortFn = sortFn;
-        this.checkInsertIndexFn = checkInsertIndexFn;
+    constructor(compareFn: (a: E, b: E) => number, eqaulFn?: (a: E, b: E) => boolean) {
+        this.compareFn = compareFn;
         this.equalFn = eqaulFn ?? ((a, b) => a === b);
     }
 
@@ -358,7 +340,7 @@ class SortedArray<E> {
      */
     public add(content: E, getResult: boolean = false): boolean | undefined {
         const index = this.contents.findIndex(c => this.equalFn(c, content));
-        const placeIndex = this.contents.findIndex(c => this.checkInsertIndexFn(c, content));
+        const placeIndex = this.contents.findIndex(c => this.compareFn(c, content) >= 0);
 
         let result: boolean | undefined;
 
@@ -411,10 +393,31 @@ class SortedArray<E> {
     }
 
     private sort() {
-        this.contents.sort(this.sortFn);
+        this.contents.sort(this.compareFn);
     }
 
-    getAsArray(): E[] {
+    public getAsArray(): E[] {
         return this.contents;
+    }
+}
+
+class Statistic {
+    private useCount: number = 0;
+    private lastUsed: Date = new Date(); 
+
+    public update() {
+        this.useCount++;
+        this.lastUsed = new Date();
+    }
+
+    public static compare(a: Statistic, b: Statistic): number {
+        let comp: number = a.useCount - b.useCount;
+        if (comp === 0 ) comp = a.lastUsed.getTime() - b.lastUsed.getTime();
+        
+        return comp;
+    }
+
+    public static compareDesc(a: Statistic, b: Statistic): number {
+        return Statistic.compare(a, b) * -1;
     }
 }

@@ -315,8 +315,9 @@ describe('A Content object in muliple Node objects', () => {
 
     test('Keywords of Content objects - check inclusion', () => {
         const chicken = testSet.get('chicken')!.contentObj;
-        expect(isSameArray(chicken.getKeywords('ab').map(k => k.keyword), ['abdi', 'abe'])).toBeTruthy();
-        expect(isSameArray(chicken.getKeywords('ac').map(k => k.keyword), ['acf', 'ach'])).toBeTruthy();
+        // unstable - newly added element comes first
+        expect(isSameArray(chicken.getKeywords('ab').map(k => k.keyword), ['abe', 'abdi'])).toBeTruthy();
+        expect(isSameArray(chicken.getKeywords('ac').map(k => k.keyword), ['ach', 'acf'])).toBeTruthy();
         
         {
             chicken.readWithKeyword('abdi');
@@ -357,7 +358,8 @@ describe('A Content object in muliple Node objects', () => {
         expect(watch.getKeywords('a').map(k => k.keyword)).toEqual(['acg', 'ab']);
 
         const dog = testSet.get('dog')!.contentObj;
-        expect(isSameArray(dog.getKeywords('ab').map(k => k.keyword), ['ab', 'abd', 'abe'])).toBeTruthy();
+        // unstable - newly added element comes first
+        expect(isSameArray(dog.getKeywords('ab').map(k => k.keyword), ['abe', 'abd', 'ab'])).toBeTruthy();
         expect(isSameArray(dog.getKeywords('ac').map(k => k.keyword), ['acf'])).toBeTruthy();
 
         {

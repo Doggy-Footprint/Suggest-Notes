@@ -229,7 +229,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
             suggestions.push({content: c, keyword: k});
         }));
 
-        suggestions.sort((a, b) => b.keyword.getScore() - a.keyword.getScore());
+        suggestions.sort((a, b) => Keyword.compareDesc(a.keyword, b.keyword));
 
         return suggestions;
     }
