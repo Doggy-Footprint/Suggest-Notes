@@ -10,17 +10,25 @@
             Content and Keyword class, use default one in trie.ts.
                 - this is for letting main.ts to override without extending it
                 - [x] isolate Statistic class
-                - [ ] refactor Statistic class to its object being able to define its own operations.
-                    - Too much troublesome in typescript. No baseclass type variable can be used to hold delegating object.
             - [ ] save / restoring static class with useCount, lastUsed
             - [ ] serialize Content, Keyword based on the path. use HashTable when loading it on memory.
                 - No entire save/restore operation assumed
-
+            - [ ] Be careful on addFileinTrie, addAliasinTrie and its usages.
+    - [ ] statistics
+        - [x] Separate Statistic for Content and Keyword (former: metadata, latter: rendering)
+            - [x] Maybe need to define getInstance() (not singleton) for Statistic and keep it in Plugin as initializer of 
+                  Statistic for Content and Keyword
+        - [ ] add more statistics for scenarios
         
 - [ ] update LinkSuggest.getSuggestions to sort with latest use
     - expect to be done by above TODO
 - [ ] Store abbreviation also for keywords including spaces
     - eg. "Keyword Based Note Suggestion" can be searched with "kbns"
+
+# Refactor
+- [ ] get start to separate modules in trie
+- [ ] Consider if Content and Keyword need to keep their own each Statistic
+
 # Optimization
 - [ ] make SortedArray to use compare instead of checkInsertIndexFn
 
