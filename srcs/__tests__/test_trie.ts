@@ -279,7 +279,7 @@ describe('A Content object in muliple Node objects', () => {
         for(const testCase of testSet.values()) {
             for (const keyword of testCase.keywords) {
                 const node = trie.search(keyword)!;
-                node.addContent(testCase.contentObj, keyword, true);
+                node.addContent(testCase.contentObj, keyword);
             }
             for (let i = 0; i < testCase.readCount; i++) {
                 testCase.contentObj.read(true);
