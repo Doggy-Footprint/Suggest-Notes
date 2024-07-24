@@ -1,11 +1,14 @@
 import { App, Plugin, TFile, MarkdownView, EditorSuggest, EditorSuggestTriggerInfo, EditorSuggestContext, EditorPosition, Editor, PluginManifest, CachedMetadata } from 'obsidian';
-import { PrefixTree, Content, Keyword } from '../srcs/trie'
+import { PrefixTree, Content, Keyword, Statistic } from '../srcs/trie'
 import { DEFAULT_SETTINGS, KeywordSuggestPluginSettings, KeywordSuggestPluginSettingTab } from './settings'
 import { measurePerformance, measureFinerLatency } from 'srcs/profiling';
+import RecentStatistic from './statistic';
 
 export default class KeywordSuggestPlugin extends Plugin {
     trie: PrefixTree<TFile>;
     settings: KeywordSuggestPluginSettings
+    getContentStatistic: (...args: any[]) => Statistic;
+    getKeywordStatistic: (...args: any[]) => Statistic;
 
     constructor(app: App, manifest: PluginManifest) {
         super(app, manifest);
@@ -13,17 +16,24 @@ export default class KeywordSuggestPlugin extends Plugin {
     }
 
     async onload() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        await this.loadSettings();
         this.addSettingTab(new KeywordSuggestPluginSettingTab(this.app, this));
 
         this.app.workspace.onLayoutReady(() => {
             measurePerformance<void>(() => {
                 this.app.vault.getFiles().forEach(file => this.addFileinTrie(file));
-            }, 'INITIAL load'); 
+            }, 'INITIAL load');
         });
 
         this.registerEditorSuggest(new LinkSuggest(this.app, this.trie));
         this.registerEventListeners();
+    }
+
+    async loadSettings() {
+        // TODO: let user determine Statistic policy
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.getContentStatistic = Statistic.getStatistic;
+        this.getKeywordStatistic = RecentStatistic.getStatistic;
     }
 
     async saveSettings() {
@@ -66,7 +76,7 @@ export default class KeywordSuggestPlugin extends Plugin {
                             continue;
                         } else if (keywords[i] > aliases[j]) {
                             // missing in keywords - new aliases
-                            this.trie.add(aliases[j++], content);
+                            this.addAliasinTrie(aliases[j++], content);
                         } else if (keywords[i] < aliases[j]) {
                             // missing in aliases - deleted aliases
                             this.trie.delete(keywords[i++], file);
@@ -75,7 +85,7 @@ export default class KeywordSuggestPlugin extends Plugin {
     
                     while (j < aliases.length) {
                         // add remaining aliases
-                        this.trie.add(aliases[j++], content);
+                        this.addAliasinTrie(aliases[j++], content);
                     }
                     
                     while (i < keywords.length) {
@@ -141,17 +151,22 @@ export default class KeywordSuggestPlugin extends Plugin {
         return name;
     }
 
-    addFileinTrie(file: TFile) {
+    addFileinTrie(file: TFile, jsonData?: any) {
         if (!this.isFileIcluded(file)) return;
     
-        let content: Content<TFile> = new Content<TFile>(file);
-        this.trie.add(this.getFileName(file), content); 
+        // TODO: use stored statistic instead of default new instance
+        let content: Content<TFile> = new Content<TFile>(file, this.getContentStatistic(jsonData));
+        this.trie.add(this.getFileName(file), content, this.getKeywordStatistic(jsonData)); 
 
         const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
 
         if (Array.isArray(aliases)) {
-            aliases.forEach(alias => this.trie.add(alias, content));
+            aliases.forEach(alias => this.trie.add(alias, content, this.getKeywordStatistic(jsonData)));
         }
+    }
+
+    addAliasinTrie(alias: string, content: Content<TFile>, jsonData?: any) {
+        this.trie.add(alias, content, this.getKeywordStatistic(jsonData));
     }
 
     isFileIcluded(file: TFile, cache: CachedMetadata | null = null): boolean {

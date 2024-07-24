@@ -30,7 +30,7 @@ export class PrefixTree<V> {
      * @param content 
      * @returns 
      */
-    add(query: string, content?: Content<V>) {
+    add(query: string, content?: Content<V>, statistic?: Statistic) {
         if (query.length === 0) return;
         if (query.length === 1) {
             this.addRoot(query); 
@@ -43,7 +43,7 @@ export class PrefixTree<V> {
         for (let i = 1; i < query.length; i++) {
             cursor = cursor.getChildOfKey(query.charAt(i), true);
         }
-        if (content) cursor.addContent(content, query);
+        if (content) cursor.addContent(content, query, statistic);
     }
 
     private addRoot(key: string) {
@@ -122,11 +122,11 @@ export class Node<V> {
         return child;
     }
 
-    public addContent(content: Content<V>, keyword: string, updateSuggestion: boolean = true) {
+    public addContent(content: Content<V>, keyword: string, statistic?: Statistic) {
         this.contents.add(content);
         content.updateNode(this);
-        if (keyword.length > 0) content.addKeyword(keyword);
-        if (updateSuggestion) this.updateSuggestionUptoRoot(content);
+        if (keyword.length > 0) content.addKeyword(keyword, statistic);
+        this.updateSuggestionUptoRoot(content);
     }
 
     public getContent(value: V): Content<V> | undefined {
@@ -223,7 +223,7 @@ export class Keyword {
     }
 
     public static compareDesc(a: Keyword, b: Keyword): number {
-        return Statistic.compareDesc(a.statistic, b.statistic);
+        return a.statistic.compareDesc(b.statistic);
     }
 
     public static equal(a: Keyword, b: Keyword): boolean {
@@ -284,8 +284,8 @@ export class Content<V> {
         return this.keywords.getAsArray();
     }
 
-    public addKeyword(keyword: string) {
-        this.keywords.add(new Keyword(keyword));
+    public addKeyword(keyword: string, statistic?: Statistic) {
+        this.keywords.add(new Keyword(keyword, statistic));
     }
 
     /**
@@ -311,7 +311,7 @@ export class Content<V> {
      * @returns 
      */
     public static compareDesc<T>(a: Content<T>, b: Content<T>): number {
-        return Statistic.compareDesc(a.statistic, b.statistic);
+        return a.statistic.compareDesc(b.statistic);
     }
 }
 
@@ -401,23 +401,37 @@ class SortedArray<E> {
     }
 }
 
-class Statistic {
+export class Statistic {
+    /**
+     * Statistic is used fro two places
+     * 1. in Content to determine how is Content to be sorted in metadata of Node
+     * 2. in Keyword to determine rendering Order
+     */
     private useCount: number = 0;
-    private lastUsed: Date = new Date(); 
+    private lastUsed: Date = new Date();
+
+    constructor(useCount?: number, lastUsed?: Date) {
+        if (useCount) this.useCount = useCount;
+        if (lastUsed) this.lastUsed = lastUsed;
+    }
+
+    public static getStatistic(jsonData?: any): Statistic {
+        return new Statistic(jsonData?.useCount, jsonData?.lastUsed);
+    }
 
     public update() {
         this.useCount++;
         this.lastUsed = new Date();
     }
 
-    public static compare(a: Statistic, b: Statistic): number {
-        let comp: number = a.useCount - b.useCount;
-        if (comp === 0 ) comp = a.lastUsed.getTime() - b.lastUsed.getTime();
+    public compare(b: Statistic): number {
+        let comp: number = this.useCount - b.useCount;
+        if (comp === 0 ) comp = this.lastUsed.getTime() - b.lastUsed.getTime();
         
         return comp;
     }
 
-    public static compareDesc(a: Statistic, b: Statistic): number {
-        return Statistic.compare(a, b) * -1;
+    public compareDesc(b: Statistic): number {
+        return this.compare(b) * -1
     }
 }
