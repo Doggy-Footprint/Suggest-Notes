@@ -55,7 +55,7 @@ export default class KeywordSuggestPlugin extends Plugin {
              */
             let content = this.trie.search(name)?.getContent(file);
 
-            if (typeof content === "undefined") {
+            if (!content) {
                 // new Content
                 this.addFileinTrie(file);
             } else {
@@ -77,7 +77,7 @@ export default class KeywordSuggestPlugin extends Plugin {
                             continue;
                         } else if (keywords[i] > aliases[j]) {
                             // missing in keywords - new aliases
-                            this.addAliasinTrie(aliases[j++], content);
+                            this.addAliasinTrie(aliases[j++], content as Content<TFile>);
                         } else if (keywords[i] < aliases[j]) {
                             // missing in aliases - deleted aliases
                             this.trie.delete(keywords[i++], file);
@@ -86,7 +86,7 @@ export default class KeywordSuggestPlugin extends Plugin {
     
                     while (j < aliases.length) {
                         // add remaining aliases
-                        this.addAliasinTrie(aliases[j++], content);
+                        this.addAliasinTrie(aliases[j++], content as Content<TFile>);
                     }
                     
                     while (i < keywords.length) {
