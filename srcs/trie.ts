@@ -294,10 +294,9 @@ export class Content<V> {
      * @returns 
      */
     public readWithKeyword(keyword: string) {
-        const element = this.keywords.getAsArray().find(k => k.keyword === keyword);
-        if (!element) return;
-        element.udpateUsage();
-        this.keywords.add(element);
+        const keywordElement = this.keywords.getAsArray().find(k => k.keyword === keyword);
+        if (!keywordElement) return;
+        keywordElement.udpateUsage();
     }
 
     equal(value: V) {
