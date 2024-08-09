@@ -1,6 +1,6 @@
 {
 	"name": "suggest-notes",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "QA",
 	"main": "main.js",
 	"scripts": {
