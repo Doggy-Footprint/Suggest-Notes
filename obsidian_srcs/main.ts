@@ -41,6 +41,7 @@ export default class KeywordSuggestPlugin extends Plugin {
     }
 
     private registerEventListeners() {
+        // event for adding / modifing / deleting aliases or tags
         this.registerEvent(this.app.metadataCache.on('changed', (file, _, cache) => {
             if (!(file instanceof TFile) 
                 || (!this.isFileIcluded(file, cache) && this.trie.search(this.getFileName(file)) === undefined)) return;
@@ -96,6 +97,7 @@ export default class KeywordSuggestPlugin extends Plugin {
             }
         }));
         
+        // event for file rename
         this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
             if (!(file instanceof TFile)) return;
 
@@ -120,6 +122,7 @@ export default class KeywordSuggestPlugin extends Plugin {
             }
         }));
 
+        // event for file deletion
         this.registerEvent(this.app.metadataCache.on('deleted', (file, prevCache) => {
             measureFinerLatency(() => {
                 if (!(file instanceof TFile) || this.trie.search(this.getFileName(file)) === undefined) return;
