@@ -55,7 +55,7 @@ export default class KeywordSuggestPlugin extends Plugin {
              */
             let content = this.trie.search(name)?.getContent(file);
 
-            if (!content) {
+            if (typeof content === "undefined") {
                 // new Content
                 this.addFileinTrie(file);
             } else {
