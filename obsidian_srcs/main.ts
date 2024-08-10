@@ -58,13 +58,14 @@ export default class KeywordSuggestPlugin extends Plugin {
             if (typeof content === 'undefined') {
                 // new Content
                 this.addFileinTrie(file);
-            } else if (content instanceof Content) {
+            } else {
                 // update existing Content
                 const keywords = content.getAllKeywords().map(k => k.keyword);
 
                 aliases.push(name);
 
                 measureFinerLatency<void>(() => {
+                    if (!(content instanceof Content)) return;
                     keywords.sort();
                     aliases.sort();
 
