@@ -20,6 +20,10 @@ This plugin allows users to define paths, and tags to be tracked so that users c
 
 For convinence and funtionality, this plugin tracks only user defined set of keywords. Keywords can be the name of note or aliases.
 
+# Priority
+
+This plugin tracks user's selection of each note to suggest frequently connected notes on top.
+
 ## Folder
 
 Users can configure folders under which all files under are tracked.
