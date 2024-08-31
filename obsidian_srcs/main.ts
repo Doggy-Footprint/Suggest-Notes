@@ -44,7 +44,7 @@ export default class KeywordSuggestPlugin extends Plugin {
         // event for adding / modifing / deleting aliases or tags
         this.registerEvent(this.app.metadataCache.on('changed', (file, _, cache) => {
             if (!(file instanceof TFile) 
-                || (!this.isFileIcluded(file, cache) && this.trie.search(this.getFileName(file)) === undefined)) return;
+                || (!this.isFileIncluded(file, cache) && this.trie.search(this.getFileName(file)) === undefined)) return;
             let aliases: string[] = cache.frontmatter?.aliases ?? [];
 
             const name = this.getFileName(file);
@@ -105,16 +105,16 @@ export default class KeywordSuggestPlugin extends Plugin {
             const oldName = this.getFileName(oldPath);
 
             let content = this.trie.search(oldName)?.getContent(file);
-            const isFileIcluded = this.isFileIcluded(file);
+            const isFileIncluded = this.isFileIncluded(file);
 
-            if (!content && isFileIcluded) {
+            if (!content && isFileIncluded) {
                 this.addFileinTrie(file);
-            } else if (!content && !isFileIcluded) {
+            } else if (!content && !isFileIncluded) {
                 return;
             }
-            else if (content && isFileIcluded) {
+            else if (content && isFileIncluded) {
                 this.trie.move(oldName, this.getFileName(file), file);
-            } else if (content && !isFileIcluded) {
+            } else if (content && !isFileIncluded) {
                 this.trie.delete(oldName, file);
 
                 const aliases = this.app.metadataCache.getFileCache(file)?.frontmatter?.aliases;
@@ -156,7 +156,7 @@ export default class KeywordSuggestPlugin extends Plugin {
     }
 
     addFileinTrie(file: TFile, jsonData?: any) {
-        if (!this.isFileIcluded(file)) return;
+        if (!this.isFileIncluded(file)) return;
     
         // TODO: use stored statistic instead of default new instance
         let content: Content<TFile> = new Content<TFile>(file, this.getContentStatistic(jsonData));
@@ -173,7 +173,7 @@ export default class KeywordSuggestPlugin extends Plugin {
         this.trie.add(alias, content, this.getKeywordStatistic(jsonData));
     }
 
-    isFileIcluded(file: TFile, cache: CachedMetadata | null = null): boolean {
+    isFileIncluded(file: TFile, cache: CachedMetadata | null = null): boolean {
         if (!cache) cache = this.app.metadataCache.getFileCache(file);
 
         return this.settings.searchDirectories.some(dir => file.path.startsWith(dir))
