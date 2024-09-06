@@ -297,6 +297,7 @@ export class Content<V> {
         const keywordElement = this.keywords.getAsArray().find(k => k.keyword === keyword);
         if (!keywordElement) return;
         keywordElement.udpateUsage();
+        this.keywords.add(keywordElement)
     }
 
     equal(value: V) {
