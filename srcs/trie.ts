@@ -1,4 +1,4 @@
-import { measureFinerLatency } from 'srcs/profiling';
+// import { measureFinerLatency } from 'srcs/profiling';
 
 class LowerCaseCharMap<V> extends Map<string, Node<V>> {
     get(key: string): Node<V> | undefined;
