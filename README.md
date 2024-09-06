@@ -37,3 +37,20 @@ Users can configure tags with which notes are tracked.
 For Suggestions and bug report, mail to khs1903b@gmail.com please.
 
 # Thanks for your use!
+
+
+# 한국어 설명 (Korean Instruction for my friends!)
+
+1. 커뮤니티 플러그인 중 Suggest Notes를 활성화 해주세요!
+2. Suggest Notes를 활성화하면 기어 모양의 설정 아이콘이 보입니다. 클릭해주세요!
+3. 이런 설정창이 나오면 빠르게 연결할 노트의 경로나 tag를 설정해주시면 됩니다!
+
+![User Setting](/images/user_setting.png)
+
+- 예를 들어 여러분이 Study 폴더의 Summary 폴더아래에 있는 모든 노트를 빠르게 연결하고 싶으시다면 **Path of directories**에 Study/Summary를 입력해주시면 됩니다. 여러 폴더를 설정하고 싶으시면 `;`로 구분하셔서 작성하시면 됩니다.
+
+- 혹은 노트의 tag로도 설정할 수 있습니다.
+
+![Tag Setting](/images/tag_example.png)
+
+위 경로에 포함되지 않더라도 직접 정한 (여기서는 `link-note`) 테그를 노트에 추가하면 빠른 연결을 사용할 수 있습니다.
