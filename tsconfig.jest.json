@@ -3,12 +3,13 @@
     "target": "es6",
     "module": "ESNext",
     "strict": true,
-    "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "outDir": "./test_out",
-    "types": ["jest"],
+    "types": ["jest", "node"],
   },
   "include": [
     "srcs/**/*.ts"
