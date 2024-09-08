@@ -1,7 +1,7 @@
 const isDev = process.env.NODE_ENV === 'development';
 
 export function measurePerformance<T>(lines: () => T, label: string, desc?: string): T {
-    if (!isDev) return lines();
+    return lines();
     
     performance.mark(`start - ${label}`);
 
@@ -16,7 +16,7 @@ export function measurePerformance<T>(lines: () => T, label: string, desc?: stri
 }
 
 export function measureFinerLatency<T>(lines: () => T, label: string, desc?: string): T {
-    if (!isDev) return lines();
+    return lines();
 
     const start = performance.now();
 
