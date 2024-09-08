@@ -21,3 +21,14 @@ data.json
 .DS_Store
 package-lock.json
 styles.css
+
+#
+srcs/__tests__/test_trie_stress.ts
+srcs/samples/1000.ts
+srcs/samples/5000.ts
+srcs/samples/10000.ts
+srcs/samples/20000.ts
+srcs/samples/50000.ts
+srcs/samples/100000.ts
+srcs/samples/200000.ts
+srcs/samples/400000.ts
