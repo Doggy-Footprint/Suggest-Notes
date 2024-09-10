@@ -238,7 +238,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
     }
 
     getSuggestions(context: EditorSuggestContext): TFileContent[] | Promise<TFileContent[]> {
-        const contents = this.trie.search(context.query)?.getSuggestion();
+        const contents = this.trie.search(context.query)?.getSuggestion().filter(c => !c.equal(this.context?.file));
         if (!contents) return [];
 
         const suggestions: TFileContent[] = [];

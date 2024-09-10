@@ -299,8 +299,8 @@ export class Content<V> {
         keywordElement.udpateUsage();
         this.keywords.add(keywordElement)
     }
-
-    equal(value: V) {
+    
+    equal(value: any) {
         return this.value === value;
     }
 
