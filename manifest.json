@@ -1,9 +1,9 @@
 {
 	"id": "suggest-notes",
 	"name": "Suggest Notes",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"minAppVersion": "0.15.0",
-	"description": "QA",
+	"description": "Quick suggests for linkable notes",
 	"author": "Doggy-Footprint",
 	"isDesktopOnly": false
 }

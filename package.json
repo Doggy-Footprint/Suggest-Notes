@@ -1,7 +1,7 @@
 {
 	"name": "suggest-notes",
-	"version": "1.0.6",
-	"description": "QA",
+	"version": "1.0.7",
+	"description": "Quick suggests for linkable notes",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
