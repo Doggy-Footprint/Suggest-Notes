@@ -198,6 +198,7 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
     public onTrigger(cursor: EditorPosition, editor: Editor, file: TFile | null): EditorSuggestTriggerInfo | null {
         if (cursor.ch == 0) return null;
         if (file === null) return null;
+        if (this.checkCodeBlock(cursor, file)) return null;
 
         const { word, startIndex } = this.getWord(cursor, editor);
         if (word.length < 2) return null;
@@ -222,10 +223,10 @@ export class LinkSuggest extends EditorSuggest<TFileContent> {
     }
 
     private checkCodeBlock(cursor: EditorPosition, file: TFile): boolean {
-        const codeSections = this.app.metadataCache.getFileCache(file)?.sections?.filter(sec => sec.type === 'code');
+        const codeSections = this.app.metadataCache.getFileCache(file)?.sections?.filter(sec => sec.type === "code");
         if (!codeSections) return false;
-        return codeSections.some(codeSec => codeSec.position.start.line >= cursor.line 
-                                            && codeSec.position.end.line <= cursor.line);        
+        return codeSections.some(codeSec => codeSec.position.start.line <= cursor.line 
+                                            && cursor.line <= codeSec.position.end.line);        
     }
 
     private getWord(cursor: EditorPosition, editor: Editor): { word: string, startIndex: number} {
