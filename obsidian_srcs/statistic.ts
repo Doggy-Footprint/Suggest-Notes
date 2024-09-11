@@ -14,7 +14,6 @@ export default class RecentStatistic extends Statistic {
     }
 
     private updateRecentStatistics() {
-        console.log(RecentStatistic.recentlyUsed);
         if (RecentStatistic.recentlyUsed.contains(this)) return;
         if (RecentStatistic.recentlyUsed.length < RecentStatistic.cutoff) {
             RecentStatistic.recentlyUsed.unshift(this);
