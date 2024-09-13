@@ -1,4 +1,9 @@
 
+# Redirection
+Recommend various-complements-plugin !
+I didn't notice that there is a leading plugin with exactly same purpose :). This plugin might not be updated further. 
+If you enjoyed the feature of this plugin, visit Various Complements plugin!
+
 # Warning
 
 <span style="color:red">**!!!TESTING!!!**</span>
