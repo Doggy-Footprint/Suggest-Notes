@@ -6,10 +6,6 @@ If you enjoyed the feature of this plugin, visit Various Complements plugin!
 
 # Warning
 
-<span style="color:red">**!!!TESTING!!!**</span>
-
-Becareful for **unexpected loss of data**
-
 # Demo
 
 [![Demo](https://img.youtube.com/vi/6aFwVIqfgIQ/0.jpg)](https://www.youtube.com/watch?v=6aFwVIqfgIQ)
