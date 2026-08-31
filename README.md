@@ -41,7 +41,7 @@ Obsidian의 기본 링크 기능은 `[[`를 입력하고 직접 검색해야 해
 ### ADR - 기술 결정
 
 - TDD 원칙과 모듈(Obisidian / Trie)분리
-- Obisidian 환경 (Electron)에서 메모리 사용량 추적 (chromium profiling) 및 최적화 - 사무용 노트북에서 구동을 목표로 했습니다.
+- Obisidian 환경 (Electron)에서 메모리 사용량 & latency 추적 (chromium profiling) 및 최적화 - 사무용 노트북에서 구동을 목표로 했습니다. [관련 글](https://harsh-wavelength-48b.notion.site/Suggest-Notes-Plugin-e1b270542fd54e30b59cf9366c1328d9?source=copy_link)
 - Trie vs Levensten Distance - scalability를 위해서 Trie를 골라야 했습니다. 아쉬운 점은 Levenstein Distance는 Fuzzy Search를 지원할 수 있는 점입니다.
     - 다만 사용 경험에서 의도하지 않았는데 튀어나오는 경우보다 의도를 가지고 호출하는 경우가 더 많고, 약 3-5 char에서 식별이 되기 때문에 오타 문제가 크지는 않았습니다.
     - 이 점에서 지금 다시 결정하더라도 Trie 기반 실시간 제안 + Synonym Dictionary 구성 & levenstein distance를 이용한 typo 처리 & semantic DB hybrid search를 통한 일괄 링크 처리를 지원하는 방향으로 갈 것 같습니다.
@@ -79,6 +79,7 @@ npm run build    # 타입체크, manifest/versions 동기화, production 빌드
 ### 관련 글
 
 - [한국어: Obsidian Plugin API 분석기](https://harsh-wavelength-48b.notion.site/Obsidian-Plugin-Obisidian-Plugin-API-35010f228487427192f7dd88bfd95e15?source=copy_link)
+- [한국어: Suggest Notes Plugin 개요 및 주요 아이디어](https://harsh-wavelength-48b.notion.site/Suggest-Notes-Plugin-e1b270542fd54e30b59cf9366c1328d9?source=copy_link)
 - [English: Debugging an Obsidian Plugin — why I don't separate business logic](https://harsh-wavelength-48b.notion.site/Debugging-Obsidian-Plugin-Why-I-don-t-separate-business-logics-742979440a8d47a9808180a09a702d5d?source=copy_link)
 
 ---
@@ -115,7 +116,7 @@ This project was built following TDD principles, and since testing was hard to d
 ### ADR - Technical Decisions
 
 - Followed TDD principles, with a clean separation between the Obsidian-facing code and the Trie module.
-- Tracked and optimized memory usage in the Obsidian (Electron) environment via Chromium profiling — the goal was smooth operation even on modest office laptops.
+- Tracked and optimized memory usage & latency in the Obsidian (Electron) environment via Chromium profiling — the goal was smooth operation even on modest office laptops.
 - Trie vs. Levenshtein distance — chose Trie for scalability. The tradeoff is that Levenshtein distance would have enabled fuzzy search.
     - In practice this wasn't a big problem: users mostly invoke the suggestion intentionally rather than have it pop up unexpectedly, and typos tend to be identifiable within about 3-5 characters anyway.
     - If I were deciding again today, I'd go with real-time Trie-based suggestions, plus a synonym dictionary, plus Levenshtein-based typo handling, plus a semantic-DB hybrid search for batch linking.
