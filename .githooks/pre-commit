@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Verifies the deterministic rules defined in AGENTS.md before allowing a commit.
+# Installed via scripts/install-hooks.sh (git config core.hooksPath .githooks).
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "pre-commit: python3 not found, skipping AGENTS.md rule verification" >&2
+  exit 0
+fi
+
+python3 "$repo_root/.githooks/verify_agents_rules.py"
